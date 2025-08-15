@@ -83,7 +83,7 @@ jobs:
           echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV      
 
       - name: Deploy with Pulumi
-        working-directory: programs
+        working-directory: programs/warpstream-agents
         run: |
           echo "=== Starting Deployment ==="
           
