@@ -82,7 +82,7 @@ jobs:
         run: echo "PYTHONPATH=$GITHUB_WORKSPACE/component:$PYTHONPATH" >> $GITHUB_ENV      
 
       - name: Deploy with Pulumi
-        working-directory: program
+        working-directory: programs
         run: |
           # Use bucket backend
           pulumi login gs://ashish-pulumi-backend-state
