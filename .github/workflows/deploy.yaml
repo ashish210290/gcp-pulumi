@@ -1,0 +1,101 @@
+name: Deploy warpstream and kafkaconnect to Production
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'programs/**'
+      - 'components/**'
+      - '.github/workflows/deploy.yaml'
+      - '.github/workflows/gcp.yaml'
+
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read  
+
+env:
+  PULUMI_BACKEND_URL:  "gs://ashish-pulumi-backend-state"
+  PROGRAMS_DIR: "./programs"
+  PROJECT_ID: "able-involution-469103-f2"
+  WIP: "projects/908504960338/locations/global/workloadIdentityPools/github-identity-pool/providers/github-provider"
+  SA: "wif-ga-sa@able-involution-469103-f2.iam.gserviceaccount.com"
+  USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.6
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1.0.0
+        with:
+          token_format: access_token
+          workload_identity_provider: 'env.WIP'
+          service_account: 'env.SA'  
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1.3.0
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      # Verify authentication
+      - name: Test GCP access
+        run: |
+          echo "Testing GCP authentication..."
+          gcloud auth list
+          gcloud config get-value project    
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Setup Pulumi
+      # - name: Install Pulumi CLI
+      #   uses: pulumi/actions@v3.10.0
+      #   with:
+      #     command: version     
+
+      - name: Install Pulumi CLI
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH 
+
+      - name: Install python dependencies
+        working-directory: "${{ env.PROGRAMS_DIR }}"   
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt 
+          else
+            pip install pulumi pulumi-gcp pulumi-kubernetes pyyaml
+
+      # Make the component importable
+      - name: Add component/ to PYTHONPATH
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE/component:$PYTHONPATH" >> $GITHUB_ENV      
+
+      - name: Deploy with Pulumi
+        working-directory: program
+        run: |
+          # Use bucket backend
+          pulumi login gs://ashish-pulumi-backend-state
+          
+          # Select stack
+          pulumi stack select lab --create
+          
+          # Deploy!
+          pulumi up --yes
+          
+          # Save outputs
+          pulumi stack output --json > outputs.json || echo '{}' > outputs.json
+
+      - name: Show deployment info
+        working-directory: program
+        run: |
+          echo "=== Deployment Complete ==="
+          cat outputs.json    

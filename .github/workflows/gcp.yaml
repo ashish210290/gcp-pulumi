@@ -1,0 +1,24 @@
+name: GCP authentication 
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  gcp-auth:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.6
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1.0.0
+        with:
+          token_format: access_token
+          workload_identity_provider: 'projects/908504960338/locations/global/workloadIdentityPools/github-identity-pool/providers/github-provider'
+          service_account: 'wif-ga-sa@able-involution-469103-f2.iam.gserviceaccount.com'
