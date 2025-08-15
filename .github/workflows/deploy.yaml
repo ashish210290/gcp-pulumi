@@ -87,12 +87,12 @@ jobs:
           pulumi login gs://ashish-pulumi-backend-state
           
           # Select stack
-          pulumi stack select ashish210290/gcp-pulumi/lab --create
+          pulumi stack select organization/warpstream-agents/dev --create
           
           # Deploy!
           pulumi up --yes --color always --verbose 3 --logtostderr
           
-          echo "Deployment complete. Stack information:"
+          echo "Dev Stack Deployment complete. Stack information:"
           pulumi stack output --json
         
       - name: Show deployment info
