@@ -108,7 +108,7 @@ jobs:
           pulumi stack output --json
         
       - name: Show deployment info
-        working-directory: program
+        working-directory: programs/warpstream-agents
         run: |
           echo "=== Deployment Complete ==="
           cat output.json    
