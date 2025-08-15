@@ -17,7 +17,7 @@ permissions:
 
 env:
   PULUMI_BACKEND_URL:  "gs://ashish-pulumi-backend-state"
-  PROGRAMS_DIR: "./programs"
+  PROGRAMS_DIR: "programs"
   PROJECT_ID: "able-involution-469103-f2"
   WIP: "projects/908504960338/locations/global/workloadIdentityPools/github-identity-pool/providers/github-provider"
   SA: "wif-ga-sa@able-involution-469103-f2.iam.gserviceaccount.com"
