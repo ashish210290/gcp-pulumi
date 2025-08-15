@@ -77,14 +77,15 @@ jobs:
             pip install pulumi pulumi-gcp pulumi-kubernetes pyyaml
           fi
       # Make the component importable
-      - name: Add component/ to PYTHONPATH
-        run: echo "PYTHONPATH=$GITHUB_WORKSPACE/component:$PYTHONPATH" >> $GITHUB_ENV      
+      - name: Add component/ to PYTHONPATH and pulumi "PULUMI_CONFIG_PASSPHRASE
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE/component:$PYTHONPATH" >> $GITHUB_ENV
+          echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV      
 
       - name: Deploy with Pulumi
         working-directory: programs
         run: |
           echo "=== Starting Deployment ==="
-          echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV
           
           # Use bucket backend
           pulumi login gs://ashish-pulumi-backend-state
