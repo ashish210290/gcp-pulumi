@@ -76,6 +76,14 @@ jobs:
           else
             pip install pulumi pulumi-gcp pulumi-kubernetes pyyaml
           fi
+          
+      # Install uv and add it to PATH
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      # (optional) show version for sanity
+      - run: uv --version
+
       # Make the component importable
       - name: Add component/ to PYTHONPATH and pulumi "PULUMI_CONFIG_PASSPHRASE
         run: |
