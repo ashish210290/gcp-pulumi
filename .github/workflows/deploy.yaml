@@ -83,6 +83,9 @@ jobs:
       - name: Deploy with Pulumi
         working-directory: programs
         run: |
+          echo "=== Starting Deployment ==="
+          echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV
+          
           # Use bucket backend
           pulumi login gs://ashish-pulumi-backend-state
           
