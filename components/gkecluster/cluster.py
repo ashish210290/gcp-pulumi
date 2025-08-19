@@ -146,7 +146,7 @@ class GKECluster(pulumi.ComponentResource):
             workload_identity_config=wi_cfg,
             # enable_autopilot=enable_autopilot,
             # remove_default_node_pool=not enable_autopilot,
-            # initial_node_count=1,  # required by API when removing default pool
+            initial_node_count=1,  # required by API when removing default pool
             deletion_protection=bool(args.get("deletion_protection", False)),
             resource_labels=labels,
             opts=ResourceOptions(parent=self),
