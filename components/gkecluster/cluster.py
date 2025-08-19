@@ -186,7 +186,7 @@ class GKECluster(pulumi.ComponentResource):
         self.location = cluster.location
         self.endpoint = cluster.endpoint
         self.ca_certificate = ca
-        self.kubeconfig = pulumi.secret(kubeconfig_gcp_user(self.name, self.endpoint, self.ca_certificate))
+        self.kubeconfig = pulumi.Output.secret(kubeconfig_gcp_user(self.name, self.endpoint, self.ca_certificate))
 
         self.register_outputs({
             "name": self.name,
