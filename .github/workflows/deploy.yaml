@@ -114,12 +114,12 @@ jobs:
           
           # Use bucket backend
           pulumi login gs://ashish-pulumi-backend-state
-          
-          # Select stack
-          pulumi stack select organization/gke-cluster/dev --create
 
           # Test import with PYTHONPATH
           python -c "from components import GKECluster, GKEClusterArgs; print('Import with PYTHONPATH successful')"
+          
+          # Select stack
+          pulumi stack select organization/gke-cluster/dev --create
 
           # Deploy!
           pulumi up --yes --color always --verbose 8 --logtostderr
