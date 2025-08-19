@@ -50,7 +50,7 @@ runs:
     - name: Prepare env (PYTHONPATH, backend login, PULUMI_CONFIG_PASSPHRASE)
       shell: bash
       run: |
-        echo "PYTHONPATH=$GITHUB_WORKSPACE/component:$PYTHONPATH" >> $GITHUB_ENV
+        echo "PYTHONPATH=$GITHUB_WORKSPACE/components:$PYTHONPATH" >> $GITHUB_ENV
         echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV
         pulumi login ${{ inputs.backend-url }}
 
