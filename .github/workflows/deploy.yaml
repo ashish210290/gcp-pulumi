@@ -84,13 +84,12 @@ jobs:
           echo "PYTHONPATH=$GITHUB_WORKSPACE/components:$PYTHONPATH" >> $GITHUB_ENV
           echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV    
 
-      # Install dependencies in the correct working directory
-      - name: Install python dependencies
+      # Use uv to install dependencies
+      - name: Install python dependencies with uv
         working-directory: "programs/gke-cluster"   
         run: |
-          python -m pip install --upgrade pip
-          # This will install the components package via the -e ../../components line
-          pip install -r requirements.txt      
+          # Install dependencies using uv (much faster than pip)
+          uv pip install --system -r requirements.txt    
 
       - name: Deploy with Pulumi
         working-directory: programs/gke-cluster
