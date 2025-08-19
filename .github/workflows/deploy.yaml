@@ -117,9 +117,12 @@ jobs:
           
           # Select stack
           pulumi stack select organization/gke-cluster/dev --create
-          
+
+          # Test import with PYTHONPATH
+          python -c "from components import GKECluster, GKEClusterArgs; print('Import with PYTHONPATH successful')"
+
           # Deploy!
-          pulumi up --yes --color always --verbose 3 --logtostderr
+          pulumi up --yes --color always --verbose 8 --logtostderr
           
           echo "Dev Stack Deployment complete. Stack information:"
           pulumi stack output --json
