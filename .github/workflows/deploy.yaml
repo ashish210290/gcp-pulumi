@@ -61,15 +61,15 @@ jobs:
           curl -fsSL https://get.pulumi.com | sh
           echo "$HOME/.pulumi/bin" >> $GITHUB_PATH 
 
-      - name: Install python dependencies
-        working-directory: "${{ env.PROGRAMS_DIR }}"   
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt 
-          else
-            pip install pulumi pulumi-gcp pulumi-kubernetes pyyaml
-          fi
+      # - name: Install python dependencies
+      #   working-directory: "${{ env.PROGRAMS_DIR }}"   
+      #   run: |
+      #     python -m pip install --upgrade pip
+      #     if [ -f requirements.txt ]; then
+      #       pip install -r requirements.txt 
+      #     else
+      #       pip install pulumi pulumi-gcp pulumi-kubernetes pyyaml
+      #     fi
 
       # Install uv and add it to PATH
       - name: Install uv
@@ -185,6 +185,20 @@ jobs:
               pip list | sed -n '1,200p' | grep -E 'gkecluster|pulumi|gcp|kubernetes|pyyaml' || true
               deactivate
 
+      - name: Debug requirements.txt path
+        working-directory: programs/gke-cluster
+        run: |
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Contents of requirements.txt ==="
+          cat requirements.txt
+          echo "=== Check if path exists ==="
+          ls -la ../../components
+          echo "=== Test the relative path ==="
+          . .venv/bin/activate
+          pip install --dry-run -r requirements.txt
+          deactivate        
+
       - name: Deploy with Pulumi
         working-directory: programs/gke-cluster
         run: |
@@ -193,7 +207,8 @@ jobs:
           # Use bucket backend
           pulumi login gs://ashish-pulumi-backend-state
 
-          pulumi install || true                    # optional; 'up' will install anyway
+          # Activate the virtual environment
+          echo "Activating virtual environment..."
 
           . .venv/bin/activate
           which python
@@ -202,6 +217,8 @@ jobs:
           echo "Python path in venv:"
           python -c "import sys; print('\n'.join(sys.path))"
           
+          pulumi install || true                    # optional; 'up' will install anyway
+          echo "=== Pulumi components installed ==="
           # Select stack
           pulumi stack select organization/gke-cluster/dev --create
 
