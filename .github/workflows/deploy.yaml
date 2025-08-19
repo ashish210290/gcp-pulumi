@@ -194,6 +194,13 @@ jobs:
           pulumi login gs://ashish-pulumi-backend-state
 
           pulumi install || true                    # optional; 'up' will install anyway
+
+          . .venv/bin/activate
+          which python
+          python --version
+          pulumi about
+          echo "Python path in venv:"
+          python -c "import sys; print('\n'.join(sys.path))"
           
           # Select stack
           pulumi stack select organization/gke-cluster/dev --create
