@@ -139,6 +139,50 @@ jobs:
               pip list | sed -n '1,200p' | grep -E 'components|pulumi|gcp|kubernetes|pyyaml' || true
               deactivate
 
+      - name: Ensure components is installed in Pulumi venv
+        working-directory: programs/gke-cluster
+        run: |
+          pulumi install || true
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Belt-and-suspenders: force-install by absolute path (covers path issues)
+          pip install -e "$GITHUB_WORKSPACE/components"
+          # Prove it's visible in THIS venv:
+          python -c "import components; print('components ->', components.__file__)"
+          deactivate        
+
+      - name: Inspect Pulumi venv for components
+        working-directory: programs/gke-cluster
+        run: |
+          echo "CWD=$(pwd)"
+          echo "---- requirements.txt"
+          cat requirements.txt || true
+          echo "---- List components dir (relative path used by requirements.txt)"
+          ls -la ../../components || true
+
+          # Ensure Pulumi's venv exists (created by `pulumi install` or `pulumi up`)
+          if [ ! -d .venv ]; then
+            echo ".venv not found; creating it via 'pulumi install'..."
+            pulumi install || true
+          fi
+
+          echo "---- Inspect inside Pulumi venv"
+          . .venv/bin/activate
+          python -V
+          python - <<'PY'
+          import sys, pkgutil
+          print("sys.executable:", sys.executable)
+          print("first sys.path entries:", sys.path[:5])
+          print("components present?:", any(m.name=='components' for m in pkgutil.iter_modules()))
+          try:
+              import components
+              print("components loaded from:", components.__file__)
+          except Exception as e:
+              print("import components failed:", repr(e))
+          PY
+              pip list | sed -n '1,200p' | grep -E 'components|pulumi|gcp|kubernetes|pyyaml' || true
+              deactivate
 
       # - name: Deploy with Pulumi
       #   working-directory: programs/gke-cluster
