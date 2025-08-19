@@ -1,0 +1,10 @@
+name: gke-cluster
+description: Spin up GKE cluster for WarpStream using gke-cluster pr
+runtime:
+  name: python
+  options:
+    toolchain: uv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: gcp-python

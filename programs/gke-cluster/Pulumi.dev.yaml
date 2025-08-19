@@ -1,0 +1,49 @@
+encryptionsalt: v1:w7KoU+2Ae28=:v1:ULN/Xlhe7GfqiGkG:eHdHl9jaGwAQSc9HH1N/ehOwxKxYOw==
+config:
+  # Google Cloud configurations
+  gcp:project: able-involution-469103-f2
+  gcp:region: "northamerica-northeast1"
+
+  # WarpStream Cluster configurations
+  warpstream-cluster: 
+    projectId: "able-involution-469103-f2"
+    region: "northamerica-northeast1"
+    clusterName: "warpstream-cluster"
+    productName: "warpstream-kafka"
+    environment: "lab"
+    id: 1
+    description: "WarpStream Kafka Connect Cluster"
+    serviceAccount: "id-warpstream-gsa@able-involution-469103-f2.iam.gserviceaccount.com" # Service Account for WarpStream
+
+    # Node configurations optimized for WarpStream
+    nodeCount: 3
+    machineType: "e2-standard-4"  # 4 vCPUs, 16 GB RAM
+    diskSizeGb: 100               # 100 GB disk size
+    diskType: "pd-ssd"            # SSD for better performance
+
+    # Network configurations
+    NetworkName: "vpc-network-01"
+    SubnetworkName: "montreal-subnet-01"
+
+    # Securiy Settings - production 
+    enablePrivateNodes: true
+    enablePrivateEndpoint: false
+    deleteProtection: true
+
+    # IP allocation - optimized for scale
+    enableIpAlias: true
+    masterIpv4CidrBlock: "172.16.0.0/28"
+    clusterIpv4CidrBlock: "10.4.0.0/14"
+    servicesIpv4CidrBlock: "10.8.0.0/20"
+
+    # Master Authorized Network
+    cidrBlock: "0.0.0.0/8"
+    displayName: "WarpStream Internal Access"
+
+    # WarpStream GCS Bucket
+    gcsBucketName: "warpstream-gke-bucket-lab"
+    gcsBucketRegion: "northamerica-northeast1"
+    gcsBucketStorageClass: "STANDARD"
+
+    # Performance Tuning
+    preemptibleNodes: false 

@@ -1,0 +1,73 @@
+name: "Pulumi python runner"
+description: "Setup Python, install Pulumi and dependencies, and run Pulumi commands"
+inputs:
+  python-version:
+    description: "Python version to setup"
+    required: false
+    default: "3.11"
+  programs-dir:
+    description: "Relative to Program directory containing Pulumi.yaml files"
+    required: true
+    default: "programs"
+  backend-url:
+    description: "Pulumi backend URL (e.g. gs://my-bucket)"
+    required: true
+    default: "gs://ashish-pulumi-backend-state"
+  stack:
+    description: "Pulumi stack to select (e.g. org/project/stack)"
+    required: true
+  command:
+    description: "Pulumi command to run (e.g. up, preview, destroy)"
+    required: true
+    default: "up"
+  config-json:
+    description: "Optional JSON string of config values to set before running the command"
+    required: false
+    default: "{}" 
+  use-uv:
+    description: "Whether to use uv toolchain for Python (true/false)"
+    required: false
+    default: "true"       
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install uv (optional)
+      if: ${{ inputs.use-uv == 'true' }}
+      uses: astral-sh/setup-uv@v6    
+
+    - name: Install Pulumi CLI
+      shell: bash
+      run: |
+        curl -fsSL https://get.pulumi.com | sh
+        echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
+
+    - name: Prepare env (PYTHONPATH, backend login, PULUMI_CONFIG_PASSPHRASE)
+      shell: bash
+      run: |
+        echo "PYTHONPATH=$GITHUB_WORKSPACE/component:$PYTHONPATH" >> $GITHUB_ENV
+        echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV
+        pulumi login ${{ inputs.backend-url }}
+
+    - name: Install Python deps (program-local)
+      shell: bash
+      working-directory: ${{ inputs.program-dir }}
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        else
+          # Fallback (Pulumi will fetch plugins automatically)
+          pip install pulumi pulumi-gcp pulumi-kubernetes pyyaml
+        fi
+
+    - name: Select or create stack
+      shell: bash
+      working-directory: ${{ inputs.program-dir }}
+      run: |
+        pulumi stack select "${{ inputs.stack }}" --create    
