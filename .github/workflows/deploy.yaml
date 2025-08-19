@@ -118,7 +118,7 @@ jobs:
           pulumi install || true                    # optional; 'up' will install anyway
           
           # Select stack
-          pulumi stack select organization/gke-cluster/dev --create
+          pulumi stack select dev --create
 
           # Deploy!
           pulumi up --yes --color always --verbose 8 --logtostderr
