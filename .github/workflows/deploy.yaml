@@ -149,6 +149,8 @@ jobs:
           # Belt-and-suspenders: force-install by absolute path (covers path issues)
           pip install -e "$GITHUB_WORKSPACE/components"
           # Prove it's visible in THIS venv:
+          python -c "import gkecluster; print('gkecluster -> gkecluster imported')"
+          python -c "import kubeconfig; print('kubeconfig -> kubeconfig imported')"    
           python -c "import components; print('components ->', components.__file__)"
           deactivate        
 
