@@ -78,10 +78,9 @@ jobs:
       # (optional) show version for sanity
       - run: uv --version
 
-      # Make the component importable
+      # Make the component importable echo "PYTHONPATH=$GITHUB_WORKSPACE/components:$PYTHONPATH" >> $GITHUB_ENV
       - name: Add component/ to PYTHONPATH and pulumi "PULUMI_CONFIG_PASSPHRASE
         run: |
-          echo "PYTHONPATH=$GITHUB_WORKSPACE/components:$PYTHONPATH" >> $GITHUB_ENV
           echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV    
 
       # Debug: Check directory structure
