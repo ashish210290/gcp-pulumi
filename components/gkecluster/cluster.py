@@ -144,9 +144,9 @@ class GKECluster(pulumi.ComponentResource):
             master_authorized_networks_config=man_cfg,
             ip_allocation_policy=ip_alloc,
             workload_identity_config=wi_cfg,
-            enable_autopilot=enable_autopilot,
-            remove_default_node_pool=not enable_autopilot,
-            initial_node_count=1,  # required by API when removing default pool
+            # enable_autopilot=enable_autopilot,
+            # remove_default_node_pool=not enable_autopilot,
+            # initial_node_count=1,  # required by API when removing default pool
             deletion_protection=bool(args.get("deletion_protection", False)),
             resource_labels=labels,
             opts=ResourceOptions(parent=self),
