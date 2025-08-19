@@ -1,6 +1,6 @@
 import pulumi
 import pulumi_gcp as gcp
-from gke_cluster.cluster import GKECluster, GKEClusterArgs
+from components import GKECluster, GKEClusterArgs
 
 cfg = pulumi.Config()            # default namespace = 'gke-cluster' (project name)
 gcp_cfg = pulumi.Config("gcp")
