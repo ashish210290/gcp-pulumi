@@ -106,25 +106,58 @@ jobs:
       #     uv pip install --system --verbose -r requirements.txt
       #     echo "=== Checking installed packages ==="
       #     uv pip list --system   
-
-      - name: Deploy with Pulumi
+      
+      - name: Inspect Pulumi venv for components
         working-directory: programs/gke-cluster
         run: |
-          echo "=== Starting Deployment ==="
-          
-          # Use bucket backend
-          pulumi login gs://ashish-pulumi-backend-state
+          echo "CWD=$(pwd)"
+          echo "---- requirements.txt"
+          cat requirements.txt || true
+          echo "---- List components dir (relative path used by requirements.txt)"
+          ls -la ../../components || true
 
-          pulumi install || true                    # optional; 'up' will install anyway
-          
-          # Select stack
-          pulumi stack select dev --create
+          # Ensure Pulumi's venv exists (created by `pulumi install` or `pulumi up`)
+          if [ ! -d .venv ]; then
+            echo ".venv not found; creating it via 'pulumi install'..."
+            pulumi install || true
+          fi
 
-          # Deploy!
-          pulumi up --yes --color always --verbose 8 --logtostderr
+          echo "---- Inspect inside Pulumi venv"
+          . .venv/bin/activate
+          python -V
+          python - <<'PY'
+          import sys, pkgutil
+          print("sys.executable:", sys.executable)
+          print("first sys.path entries:", sys.path[:5])
+          print("components present?:", any(m.name=='components' for m in pkgutil.iter_modules()))
+          try:
+              import components
+              print("components loaded from:", components.__file__)
+          except Exception as e:
+              print("import components failed:", repr(e))
+          PY
+              pip list | sed -n '1,200p' | grep -E 'components|pulumi|gcp|kubernetes|pyyaml' || true
+              deactivate
+
+
+      # - name: Deploy with Pulumi
+      #   working-directory: programs/gke-cluster
+      #   run: |
+      #     echo "=== Starting Deployment ==="
           
-          echo "Dev Stack Deployment complete. Stack information:"
-          pulumi stack output --json
+      #     # Use bucket backend
+      #     pulumi login gs://ashish-pulumi-backend-state
+
+      #     pulumi install || true                    # optional; 'up' will install anyway
+          
+      #     # Select stack
+      #     pulumi stack select dev --create
+
+      #     # Deploy!
+      #     pulumi up --yes --color always --verbose 8 --logtostderr
+          
+      #     echo "Dev Stack Deployment complete. Stack information:"
+      #     pulumi stack output --json
         
   # deploy-warpstream-agents:
   #   needs: deploy-gke-cluster
