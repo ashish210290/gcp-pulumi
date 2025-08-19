@@ -98,14 +98,14 @@ jobs:
           cat programs/gke-cluster/requirements.txt
 
       # Use uv to install dependencies with more verbose output
-      # - name: Install python dependencies with uv
-      #   working-directory: "programs/gke-cluster"   
-      #   run: |
-      #     echo "=== Installing dependencies with uv ==="
-      #     # Install dependencies using uv with verbose output
-      #     uv pip install --system --verbose -r requirements.txt
-      #     echo "=== Checking installed packages ==="
-      #     uv pip list --system   
+      - name: Install python dependencies with uv
+        working-directory: "programs/gke-cluster"   
+        run: |
+          echo "=== Installing dependencies with uv ==="
+          # Install dependencies using uv with verbose output
+          uv pip install --system --verbose -r requirements.txt
+          echo "=== Checking installed packages ==="
+          uv pip list --system   
 
       - name: Deploy with Pulumi
         working-directory: programs/gke-cluster
