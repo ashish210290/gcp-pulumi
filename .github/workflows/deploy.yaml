@@ -98,14 +98,14 @@ jobs:
           cat programs/gke-cluster/requirements.txt
 
       # Use uv to install dependencies with more verbose output
-      - name: Install python dependencies with uv
-        working-directory: "programs/gke-cluster"   
-        run: |
-          echo "=== Installing dependencies with uv ==="
-          # Install dependencies using uv with verbose output
-          uv pip install --system --verbose -r requirements.txt
-          echo "=== Checking installed packages ==="
-          uv pip list --system   
+      # - name: Install python dependencies with uv
+      #   working-directory: "programs/gke-cluster"   
+      #   run: |
+      #     echo "=== Installing dependencies with uv ==="
+      #     # Install dependencies using uv with verbose output
+      #     uv pip install --system --verbose -r requirements.txt
+      #     echo "=== Checking installed packages ==="
+      #     uv pip list --system   
 
       - name: Deploy with Pulumi
         working-directory: programs/gke-cluster
@@ -115,8 +115,7 @@ jobs:
           # Use bucket backend
           pulumi login gs://ashish-pulumi-backend-state
 
-          # Test import with PYTHONPATH
-          #python -c "from components import GKECluster, GKEClusterArgs; print('Import with PYTHONPATH successful')"
+          pulumi install || true                    # optional; 'up' will install anyway
           
           # Select stack
           pulumi stack select organization/gke-cluster/dev --create
