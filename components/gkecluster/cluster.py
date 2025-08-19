@@ -93,14 +93,18 @@ class GKECluster(pulumi.ComponentResource):
         # Authorized networks
         man_cfg = None
         if args.get("master_authorized_networks"):
-            man_cfg = gcp.container.ClusterMasterAuthorizedNetworksConfigArgs(
-                cidr_blocks=[
-                    gcp.container.ClusterMasterAuthorizedNetworksConfigCidrBlockArgs(
-                        cidr_block=e["cidr_block"],
-                        display_name=e.get("display_name"),
-                    ) for e in args["master_authorized_networks"]
-                ],
-                enabled=True,
+            blocks = [
+                gcp.container.ClusterMasterAuthorizedNetworksConfigCidrBlockArgs(
+                    cidr_block=e["cidr_block"],
+                    display_name=e.get("display_name"),
+                )
+                # 'display_name' is optional, so we use get() to avoid KeyError
+                for e in args.get("master_authorized_networks", [])
+                if "cidr_block" in e
+            ]
+            man_cfg = (
+                gcp.container.ClusterMasterAuthorizedNetworksConfigArgs(cidr_blocks=blocks)
+                if blocks else None
             )
 
         # IP alias
