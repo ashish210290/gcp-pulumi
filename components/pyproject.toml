@@ -2,10 +2,16 @@
 name = "components"
 version = "0.1.0"
 requires-python = ">=3.10"
+dependencies = [
+    "pulumi>=3.0.0",
+    "pulumi-kubernetes>=4.0.0",
+    "pulumi-gcp>=7.0.0",
+]
+
 
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["components*", "gkecluster", "kubeconfig"]
+packages = ["components", "gkecluster", "kubeconfig"]
