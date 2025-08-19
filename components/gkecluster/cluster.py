@@ -110,11 +110,15 @@ class GKECluster(pulumi.ComponentResource):
         # IP alias
         ip_alloc = None
         if args.get("enable_ip_alias"):
-            ip_alloc = gcp.container.ClusterIpAllocationPolicyArgs(
-                use_ip_aliases=True,
-                cluster_ipv4_cidr_block=args.get("cluster_ipv4_cidr_block"),
-                services_ipv4_cidr_block=args.get("services_ipv4_cidr_block"),
-            )
+            ip_alloc_kwargs = {}
+
+            # Use whichever style you have: explicit CIDRs OR secondary range names
+            if args.get("cluster_ipv4_cidr_block"):
+                ip_alloc_kwargs["cluster_ipv4_cidr_block"] = args["cluster_ipv4_cidr_block"]
+            if args.get("services_ipv4_cidr_block"):
+                ip_alloc_kwargs["services_ipv4_cidr_block"] = args["services_ipv4_cidr_block"]
+            
+            ip_alloc = gcp.container.ClusterIpAllocationPolicyArgs(**ip_alloc_kwargs)    
 
         # Normalize network + subnet to self-links if needed
         network = args.get("network")
