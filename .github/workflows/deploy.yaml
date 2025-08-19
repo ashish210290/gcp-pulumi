@@ -151,7 +151,6 @@ jobs:
           # Prove it's visible in THIS venv:
           python -c "import gkecluster; print('gkecluster -> gkecluster imported')"
           python -c "import kubeconfig; print('kubeconfig -> kubeconfig imported')"    
-          python -c "import components; print('components ->', components.__file__)"
           deactivate        
 
       - name: Inspect Pulumi venv for components
@@ -176,14 +175,14 @@ jobs:
           import sys, pkgutil
           print("sys.executable:", sys.executable)
           print("first sys.path entries:", sys.path[:5])
-          print("components present?:", any(m.name=='components' for m in pkgutil.iter_modules()))
+          print("gkecluster present?:", any(m.name=='gkecluster' for m in pkgutil.iter_modules()))
           try:
-              import components
-              print("components loaded from:", components.__file__)
+              import gkecluster
+              print("gkecluster loaded from:", components.__file__)
           except Exception as e:
               print("import components failed:", repr(e))
           PY
-              pip list | sed -n '1,200p' | grep -E 'components|pulumi|gcp|kubernetes|pyyaml' || true
+              pip list | sed -n '1,200p' | grep -E 'gkecluster|pulumi|gcp|kubernetes|pyyaml' || true
               deactivate
 
       # - name: Deploy with Pulumi
