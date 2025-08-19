@@ -1,1 +1,3 @@
-from  .gke_cluster import GKECluster, GKEClusterArgs
+from .cluster import GKECluster, GKEClusterArgs
+
+__all__ = ['GKECluster', 'GKEClusterArgs']
