@@ -9,7 +9,7 @@ project = gcp_cfg.require("project")
 region  = gcp_cfg.require("region")
 
 # Read the cluster object from config (as recommended above)
-cluster_cfg = cfg.require_object("cluster")
+cluster_cfg = cfg.require_object("warpstream-cluster")
 
 # Map your YAML -> component args (normalize names → snake_case)
 args: GKEClusterArgs = {

@@ -84,12 +84,29 @@ jobs:
           echo "PYTHONPATH=$GITHUB_WORKSPACE/components:$PYTHONPATH" >> $GITHUB_ENV
           echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV    
 
-      # Use uv to install dependencies
+      # Debug: Check directory structure
+      - name: Debug - Check directory structure
+        run: |
+          echo "=== Current directory structure ==="
+          ls -la
+          echo "=== Components directory ==="
+          ls -la components/ || echo "components/ directory not found"
+          echo "=== Programs directory ==="
+          ls -la programs/
+          echo "=== GKE cluster directory ==="
+          ls -la programs/gke-cluster/
+          echo "=== Requirements.txt content ==="
+          cat programs/gke-cluster/requirements.txt
+
+      # Use uv to install dependencies with more verbose output
       - name: Install python dependencies with uv
         working-directory: "programs/gke-cluster"   
         run: |
-          # Install dependencies using uv (much faster than pip)
-          uv pip install --system -r requirements.txt    
+          echo "=== Installing dependencies with uv ==="
+          # Install dependencies using uv with verbose output
+          uv pip install --system --verbose -r requirements.txt
+          echo "=== Checking installed packages ==="
+          uv pip list --system   
 
       - name: Deploy with Pulumi
         working-directory: programs/gke-cluster
