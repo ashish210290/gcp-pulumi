@@ -8,4 +8,4 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["components*, "gkecluster", "kubeconfig"]
+packages = ["components*", "gkecluster", "kubeconfig"]
