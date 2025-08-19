@@ -132,54 +132,50 @@ class GKECluster(pulumi.ComponentResource):
         labels = args.get("resource_labels")
 
         # Create cluster
-        cluster = gcp.container.Cluster(
-            f"{name}-cluster",
-            name=cluster_name,
-            location=location,
-            project=project_id,
-            release_channel=gcp.container.ClusterReleaseChannelArgs(channel=release_channel),
-            network=network,
-            subnetwork=subnetwork,
-            private_cluster_config=priv_cfg,
-            master_authorized_networks_config=man_cfg,
-            ip_allocation_policy=ip_alloc,
-            workload_identity_config=wi_cfg,
-            # enable_autopilot=enable_autopilot,
-            # remove_default_node_pool=not enable_autopilot,
-            initial_node_count=1,  # required by API when removing default pool
-            deletion_protection=bool(args.get("deletion_protection", False)),
-            resource_labels=labels,
-            opts=ResourceOptions(parent=self),
-        )
+        cluster_kwargs = {
+            "name": cluster_name,
+            "location": location,
+            "project": project_id,
+            "release_channel": gcp.container.ClusterReleaseChannelArgs(channel=release_channel),
+            "network": network,
+            "subnetwork": subnetwork,
+            "private_cluster_config": priv_cfg,
+            "master_authorized_networks_config": man_cfg,
+            "ip_allocation_policy": ip_alloc,
+            "workload_identity_config": wi_cfg,
+            "deletion_protection": bool(args.get("deletion_protection", False)),
+            "resource_labels": labels,
+        }
 
         # Node pool (Standard clusters)
-        if not enable_autopilot:
-            gcp.container.NodePool(
-                f"{name}-np",
-                project=project_id,
-                cluster=cluster.name,
-                location=location,
-                autoscaling=gcp.container.NodePoolAutoscalingArgs(
-                    min_node_count=int(args.get("min_count", args.get("node_count", 1))),
-                    max_node_count=int(args.get("max_count", max(args.get("node_count", 1), 2))),
-                ),
-                node_config=gcp.container.NodePoolNodeConfigArgs(
-                    machine_type=args.get("machine_type", "e2-standard-4"),
-                    disk_size_gb=int(args.get("disk_size_gb", 100)),
-                    disk_type=args.get("disk_type", "pd-balanced"),
+        if enable_autopilot:
+            cluster_kwargs["enable_autopilot"] = True
+        else:
+            # Standard node pool
+            cluster_kwargs["remove_default_node_pool"] = True
+            cluster_kwargs["initial_node_count"] = 1  # will be replaced by a custom node pool below
+            
+            node_sa = args.get("node_service_account")
+            if node_sa:
+                cluster_kwargs["node_config"] = gcp.container.ClusterNodeConfigArgs(
+                    service_account=node_sa,
                     oauth_scopes=args.get("oauth_scopes", [
-                        "https://www.googleapis.com/auth/cloud-platform",
+                         "https://www.googleapis.com/auth/cloud-platform",
                         "https://www.googleapis.com/auth/compute",
-                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/devstorage.read_write", 
                         "https://www.googleapis.com/auth/logging.write",
-                        "https://www.googleapis.com/auth/monitoring"
-                    ]),
-                    service_account=args.get("node_service_account"),
-                    preemptible=bool(args.get("preemptible_nodes", False)),  # use 'spot' if you prefer Spot VMs
-                ),
-                opts=ResourceOptions(parent=cluster),
-            )
-
+                        "https://www.googleapis.com/auth/monitoring",
+                        ]),
+                )
+            
+            
+            
+        # Create the GKE cluster
+        cluster = gcp.container.Cluster(
+            f"{name}-cluster",
+            **{k:v for k,v in cluster_kwargs.items() if v is not None},
+            opts=ResourceOptions(parent=self),
+        )  
         # Outputs
         ca = cluster.master_auth.apply(lambda ma: getattr(ma, "clusterCaCertificate", None) or ma["clusterCaCertificate"])
         self.name = cluster.name
