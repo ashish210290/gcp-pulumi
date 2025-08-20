@@ -175,7 +175,7 @@ class GKECluster(pulumi.ComponentResource):
             opts=ResourceOptions(parent=self),
         )  
         # Outputs
-        ca = cluster.master_auth.apply(lambda ma: getattr(ma, "clusterCaCertificate", None) or ma["clusterCaCertificate"])
+        ca = cluster.master_auth.apply(lambda ma: getattr(ma, "cluster_ca_certificate", None))
         self.name = cluster.name
         self.location = cluster.location
         self.endpoint = cluster.endpoint
