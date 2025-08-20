@@ -209,7 +209,15 @@ class GKECluster(pulumi.ComponentResource):
             sec = gcp.secretmanager.Secret(
                 f"{name}-{secret_name}-secret",
                 secret_id=secret_info["secret_id"],
-                replication=gcp.secretmanager.SecretReplicationArgs(automatic=True),
+                replication=gcp.secretmanager.SecretReplicationArgs(
+                    user_managed=gcp.secretmanager.SecretUserManagedReplicationArgs(
+                        replicas=[
+                            gcp.secretmanager.SecretUserManagedReplicationReplicaArgs(
+                                location=location,
+                            )
+                        ]
+                    )
+                ),
                 opts=ResourceOptions(parent=cluster),
             )
             # Create the first version with the data
