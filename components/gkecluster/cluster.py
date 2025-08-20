@@ -210,9 +210,9 @@ class GKECluster(pulumi.ComponentResource):
                 f"{name}-{secret_name}-secret",
                 secret_id=secret_info["secret_id"],
                 replication=gcp.secretmanager.SecretReplicationArgs(
-                    user_managed=gcp.secretmanager.SecretUserManagedReplicationArgs(
+                    user_managed=gcp.secretmanager.SecretReplicationUserManagedArgs(
                         replicas=[
-                            gcp.secretmanager.SecretUserManagedReplicationReplicaArgs(
+                            gcp.secretmanager.SecretReplicationUserManagedReplicaArgs(
                                 location=location,
                             )
                         ]
