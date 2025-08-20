@@ -1,0 +1,1 @@
+# pull cert JSON -> K8S Secret

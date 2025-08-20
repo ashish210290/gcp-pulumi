@@ -1,0 +1,1 @@
+# GCS + Workload Identity + bucket IAM, Kubernetes SA, provider 

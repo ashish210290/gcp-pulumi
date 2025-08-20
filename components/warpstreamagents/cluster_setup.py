@@ -1,0 +1,1 @@
+# read kubeconfig/name/endpoint from secretManager

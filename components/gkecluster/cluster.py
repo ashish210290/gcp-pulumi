@@ -174,6 +174,48 @@ class GKECluster(pulumi.ComponentResource):
             **{k:v for k,v in cluster_kwargs.items() if v is not None},
             opts=ResourceOptions(parent=self),
         )  
+        
+        stack_prefix = pulumi.Config("stack").get("prefix") or "ws"
+        
+        # Build the three secret ids
+        kubeconfig_secret_id = pulumi.Output.format("{prefix}-{name}-kubeconfig", prefix=stack_prefix, name=cluster.name)
+        endpoint_secret_id = pulumi.Output.format("{prefix}-{name}-cluster-name", prefix=stack_prefix, name=cluster.name)
+        cluster_name_secret_id = pulumi.Output.format("{prefix}-{name}-cluster-endpoint", prefix=stack_prefix, name=cluster.name)
+        
+        
+        kubeconfig_out = pulumi.Output.secret(kubeconfig_gcp_user(self.name, self.endpoint, self.ca_certificate))
+        
+        secrets ={
+            "kubeconfig": {
+                "secret_id": kubeconfig_secret_id,
+                "data": kubeconfig_out,
+            },
+            "cluster_name": {
+                "secret_id": cluster_name_secret_id,
+                "data": cluster.name,
+            },
+            "endpoint": {
+                "secret_id": endpoint_secret_id,
+                "data": cluster.endpoint,
+            },
+        }
+        
+        for secret_name, secret_info in secrets.items():
+            # Create the secret in Secret Manager
+            sec = gcp.secretmanager.Secret(
+                f"{name}-{secret_name}-secret",
+                secret_id=secret_info["secret_id"],
+                replication=gcp.secretmanager.SecretReplicationArgs(automatic=True),
+                opts=ResourceOptions(parent=cluster),
+            )
+            # Create the first version with the data
+            gcp.secretmanager.SecretVersion(
+                f"{name}-{secret_name}-version",
+                secret_id=secret_info["secret_id"],
+                secret_data=secret_info["data"] ,
+                opts=ResourceOptions(parent=sec),
+            )
+        
         # Outputs
         ca = cluster.master_auth.apply(lambda ma: getattr(ma, "cluster_ca_certificate", None))
         self.name = cluster.name
