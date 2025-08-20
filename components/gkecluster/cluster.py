@@ -168,8 +168,6 @@ class GKECluster(pulumi.ComponentResource):
                         ]),
                 )
             
-            
-            
         # Create the GKE cluster
         cluster = gcp.container.Cluster(
             f"{name}-cluster",
