@@ -183,12 +183,16 @@ class GKECluster(pulumi.ComponentResource):
         cluster_name_secret_id = pulumi.Output.format("{prefix}-{name}-cluster-endpoint", prefix=stack_prefix, name=cluster.name)
         
         
-        kubeconfig_out = pulumi.Output.secret(kubeconfig_gcp_user(self.name, self.endpoint, self.ca_certificate))
+        # Build kubeconfig straight from cluster outputs
+        ca_out = cluster.master_auth.apply(lambda m: m.cluster_ca_certificate)
+        self.kubeconfig = pulumi.Output.secret(
+            kubeconfig_gcp_user(cluster.name, cluster.endpoint, ca_out)
+        )
         
         secrets ={
             "kubeconfig": {
                 "secret_id": kubeconfig_secret_id,
-                "data": kubeconfig_out,
+                "data": self.kubeconfig,
             },
             "cluster_name": {
                 "secret_id": cluster_name_secret_id,
