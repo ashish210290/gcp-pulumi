@@ -228,6 +228,7 @@ jobs:
   #New Jon for WarpStream Agent Deployment
   deploy-warpstream-cluster:
     runs-on: ubuntu-latest
+    needs: [deploy-gke-cluster] 
 
     steps:
       - name: Checkout repository
