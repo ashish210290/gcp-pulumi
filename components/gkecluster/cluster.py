@@ -223,7 +223,7 @@ class GKECluster(pulumi.ComponentResource):
             # Create the first version with the data
             gcp.secretmanager.SecretVersion(
                 f"{name}-{secret_name}-version",
-                secret=secret_info["secret_id"],
+                secret=secret_info.secret_id,
                 secret_data=secret_info["data"] ,
                 opts=ResourceOptions(parent=sec),
             )
