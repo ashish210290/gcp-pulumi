@@ -58,7 +58,9 @@ jobs:
             project_id: ${{ env.PROJECT_ID }}
     
         - name: Install Pulumi
-          uses: pulumi/actions/install-pulumi-cli@v3
+          uses: pulumi/actions@v5
+          with:
+            command: version
     
         - name: setup cloud sdk
           uses: google-github-actions/setup-gcloud@v2
