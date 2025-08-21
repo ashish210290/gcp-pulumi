@@ -1,0 +1,181 @@
+name: Generate WarpStream TLS Secret
+on:
+  workflow_dispatch:    # Allows manual triggering of the workflow
+    inputs:
+        secret_name: 
+            description: "GCP Secret Manager ID for the TLS bundle (JSON with tls.crt/tls.key/ca.crt)"
+            type: string
+            default: "warpstream-tls-certificate"
+
+        ca_secret_name:
+            description: "GCP Secret Manager ID for the CA certificate (PEM format)"
+            type: string
+            default: "wstream-ca-cert"
+
+        subject_cn:
+            description: "Common Name for the TLS certificate (e.g., warpstream.example.com)"
+            type: string
+            default: "warpstream-agent"
+        dns_names:
+            description: "Comma-separated list of DNS names for the TLS certificate"
+            type: string
+            default: "warpstream-agent,warpstream-kafka.warpstream.svc,warpstream-schema-registry.warpstream.svc,localhost"
+        validity_days:
+            description: "Number of days the certificate should be valid"
+            required: true
+            type: number
+            default: 825
+        key_bits:
+            default: 2048
+            description: Number of bits for the private key
+            required: true
+            type: number
+            
+permissions:
+  id-token: write
+  contents: read  
+
+env:
+  PULUMI_BACKEND_URL:  "gs://ashish-pulumi-backend-state"
+  PROGRAMS_DIR: "programs"
+  PROJECT_ID: "able-involution-469103-f2"
+  WIP: "projects/908504960338/locations/global/workloadIdentityPools/github-identity-pool/providers/github-provider"
+  SA: "wif-ga-sa@able-involution-469103-f2.iam.gserviceaccount.com"
+  USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
+
+jobs:
+    generate-tls-secret:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+    
+        - name: Set up GCP credentials
+          uses: google-github-actions/auth@v0.4.0
+          with:
+            workload_identity_provider: ${{ env.WIP }}
+            service_account: ${{ env.SA }}
+            project_id: ${{ env.PROJECT_ID }}
+    
+        - name: Install Pulumi
+          uses: pulumi/actions/install-pulumi-cli@v3
+    
+        - name: setup cloud sdk
+          uses: google-github-actions/setup-gcloud@v2
+          with:
+            version: 'latest'
+            project_id: ${{ env.PROJECT_ID }}
+            
+        - name: Print context (no secrets)
+          run: |
+            echo "Project: $PROJECT_ID"
+            echo "Secret:  ${{ inputs.secret_name }}"
+            echo "CA Secret (optional): ${{ inputs.ca_secret_name }}"
+            echo "CN:      ${{ inputs.subject_cn }}"
+            echo "SANs:    ${{ inputs.dns_names }}"   
+            
+        - name: Build SAN config from inputs
+          id: san
+          shell: bash
+          run: |
+            set -euo pipefail
+            IFS=',' read -ra DNS_ARR <<< "${{ inputs.dns_names }}"
+            echo "subjectAltName = @alt_names" > san.cnf
+            echo "[alt_names]" >> san.cnf
+            i=1
+            for host in "${DNS_ARR[@]}"; do
+                host="$(echo "$host" | xargs)"   # trim
+                [ -z "$host" ] && continue
+                echo "DNS.$i = $host" >> san.cnf
+                i=$((i+1))
+            done
+            echo "Generated san.cnf:"
+            cat san.cnf
+
+        - name: Generate CA key/cert
+          shell: bash
+          run: |
+            set -euo pipefail
+            openssl genrsa -out ca.key 4096
+            openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 \
+                -subj "/CN=warpstream-ca" -out ca.crt
+
+        - name: Generate server key + CSR
+          shell: bash
+          run: |
+            set -euo pipefail
+            openssl genrsa -out tls.key ${{ inputs.key_bits }}
+            openssl req -new -key tls.key -out server.csr -subj "/CN=${{ inputs.subject_cn }}"    
+        - name: Sign server cert with SAN
+          shell: bash
+          run: |
+              set -euo pipefail
+              openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+               -out tls.crt -days ${{ inputs.validity_days }} -sha256 -extfile san.cnf
+         
+        - name: Create JSON bundle for Secret Manager
+          id: bundle
+          shell: bash
+          run: |
+                set -euo pipefail
+                # Base64 encode with no line wraps (-w0)
+                CRT_B64="$(base64 -w0 < tls.crt)"
+                KEY_B64="$(base64 -w0 < tls.key)"
+                CA_B64="$(base64 -w0 < ca.crt)"
+
+                jq -n \
+                    --arg crt "$CRT_B64" \
+                    --arg key "$KEY_B64" \
+                    --arg ca  "$CA_B64" \
+                    '{ "tls.crt": $crt, "tls.key": $key, "ca.crt": $ca }' > tls-bundle.json
+
+                echo "bundle_path=tls-bundle.json" >> "$GITHUB_OUTPUT"
+                echo "ca_path=ca.crt" >> "$GITHUB_OUTPUT"
+
+        - name: Create or update TLS bundle secret
+          shell: bash
+          run: |
+            set -euo pipefail
+            SECRET_ID="${{ inputs.secret_name }}"
+            if gcloud secrets describe "$SECRET_ID" --project "$PROJECT_ID" >/dev/null 2>&1; then
+                echo "Secret '$SECRET_ID' exists. Adding new version..."
+                gcloud secrets versions add "$SECRET_ID" \
+                --project "$PROJECT_ID" \
+                --data-file "${{ steps.bundle.outputs.bundle_path }}"
+            else
+                echo "Creating secret '$SECRET_ID'..."
+                gcloud secrets create "$SECRET_ID" \
+                --project "$PROJECT_ID" \
+                --replication-policy=automatic
+                gcloud secrets versions add "$SECRET_ID" \
+                --project "$PROJECT_ID" \
+                --data-file "${{ steps.bundle.outputs.bundle_path }}"
+            fi
+
+        - name: (Optional) Create/update CA-only secret
+          if: ${{ inputs.ca_secret_name != '' }}
+          shell: bash
+          run: |
+            set -euo pipefail
+            CA_SECRET_ID="${{ inputs.ca_secret_name }}"
+            if gcloud secrets describe "$CA_SECRET_ID" --project "$PROJECT_ID" >/dev/null 2>&1; then
+                echo "CA secret '$CA_SECRET_ID' exists. Adding new version..."
+                gcloud secrets versions add "$CA_SECRET_ID" \
+                --project "$PROJECT_ID" \
+                --data-file "${{ steps.bundle.outputs.ca_path }}"
+            else
+                echo "Creating CA secret '$CA_SECRET_ID'..."
+                gcloud secrets create "$CA_SECRET_ID" \
+                --project "$PROJECT_ID" \
+                --replication-policy=automatic
+                gcloud secrets versions add "$CA_SECRET_ID" \
+                --project "$PROJECT_ID" \
+                --data-file "${{ steps.bundle.outputs.ca_path }}"
+            fi
+
+        - name: Cleanup local key material
+          if: always()
+          shell: bash
+          run: |
+            set -euo pipefail
+            shred -u tls.key ca.key server.csr tls.crt ca.crt san.cnf tls-bundle.json 2>/dev/null || true       

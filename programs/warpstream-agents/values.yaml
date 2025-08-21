@@ -1,0 +1,33 @@
+# WarpStream Agent Helm Chart Configuration
+# This file contains the values.yaml configuration for the WarpStream agent Helm chart
+# Placeholders (${VARIABLE_NAME}) will be replaced with actual values from the program
+
+config:
+  bucketURL: "${BUCKET_URL}"
+  agentKey: "${AGENT_KEY}"
+  virtualClusterID: "${VIRTUAL_CLUSTER_ID}"
+  region: "${WARPSTREAM_REGION}"
+
+serviceAccount:
+  create: false
+  name: "${SERVICE_ACCOUNT_NAME}"
+
+kafkaService:
+  type: ClusterIP
+  enabled: true
+
+extraEnv:
+  - name: WARPSTREAM_ENABLE_MANAGED_PIPELINES
+    value: "true"
+  - name: WARPSTREAM_KAFKA_HIGH_CARDINALITY_METRICS
+    value: "true"
+
+schemaRegistryService:
+  enabled: true
+  type: ClusterIP
+
+certificate:
+  enableTLS: true
+  secretName: "${CERTIFICATE_SECRET_NAME}"
+  certManager:
+    create: false

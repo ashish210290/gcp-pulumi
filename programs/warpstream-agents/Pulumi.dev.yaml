@@ -1,3 +1,27 @@
 encryptionsalt: v1:Q2W2JHfbgIE=:v1:OMUeMs/mLjzRbEkh:vORwuMBOEGLVRCUvMC35lUa7aA9WSQ==
 config:
   gcp:project: able-involution-469103-f2
+  gcp:region: "northamerica-northeast1"
+
+  warpstream:gkeStackRef: organization/gke-cluster/dev
+  warpstream:bucketName: warpstream-gke-bucket-lab
+  warpstream:namespace: warpstream
+  warpstream:kubeconfigSecretId: ws-warpstream-cluster-kubeconfig # Secret containing kubeconfig for WarpStream GKE cluster
+  warpstream:agentKey: aks_a96ec3e47cffced596454071e1b6eff298ff290b4bbeb7e00022ded402fcb884
+  warpstream:virtualClusterID: vci_8122bd76_5d22_46a7_baf7_07aad21d69d1
+  warpstream:warpstreamRegion: us-central1
+  warpstream:chartVersion: 0.15.25
+  warpstream:gkeClusterName: ws-warpstream-cluster-cluster-name
+  warpstream:productName: datahub2
+  warpstream:environment: dev
+  warpstream:id: "1"
+  warpstream:valuesFile: values.yaml
+
+  # Secret Manager Configuration
+  warpstream:gcpTlsCertSecretName: warpstream-tls-certificate # GCP secret containing full TLS cert (source)
+  warpstream:gcpCaCertSecretName: wstream-ca-cert # GCP secret where CA cert will be saved (destination)
+  warpstream:k8sTlsSecretName: warpstream-k8s-tls-secret # K8s secret name where TLS cert will be saved (destination)
+  gcp:disableGlobalProjectWarning: "true"
+  warpstream:project: able-involution-469103-f2
+  warpstream:region: northamerica-northeast1
+
