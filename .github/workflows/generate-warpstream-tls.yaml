@@ -60,7 +60,8 @@ jobs:
         - name: Install Pulumi
           uses: pulumi/actions@v5
           with:
-            command: version
+            command: refresh
+            stack_name: dev
     
         - name: setup cloud sdk
           uses: google-github-actions/setup-gcloud@v2
