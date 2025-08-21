@@ -57,11 +57,11 @@ jobs:
             service_account: ${{ env.SA }}
             project_id: ${{ env.PROJECT_ID }}
     
-        - name: Install Pulumi
-          uses: pulumi/actions@v5
-          with:
-            command: refresh
-            stack-name: dev
+        # - name: Install Pulumi
+        #   uses: pulumi/actions@v5
+        #   with:
+        #     command: refresh
+        #     stack-name: dev
     
         - name: setup cloud sdk
           uses: google-github-actions/setup-gcloud@v2
