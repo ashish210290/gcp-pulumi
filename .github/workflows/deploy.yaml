@@ -61,16 +61,6 @@ jobs:
           curl -fsSL https://get.pulumi.com | sh
           echo "$HOME/.pulumi/bin" >> $GITHUB_PATH 
 
-      # - name: Install python dependencies
-      #   working-directory: "${{ env.PROGRAMS_DIR }}"   
-      #   run: |
-      #     python -m pip install --upgrade pip
-      #     if [ -f requirements.txt ]; then
-      #       pip install -r requirements.txt 
-      #     else
-      #       pip install pulumi pulumi-gcp pulumi-kubernetes pyyaml
-      #     fi
-
       # Install uv and add it to PATH
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -235,111 +225,101 @@ jobs:
           echo "Dev Stack Deployment complete. Stack information:"
           pulumi stack output --json
           
+  #New Jon for WarpStream Agent Deployment
+  deploy-warpstream-cluster:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.6
+
+      - name: Authenticate to GCP (OIDC)
+        uses: google-github-actions/auth@v1.0.0
+        with:
+          token_format: access_token
+          workload_identity_provider: 'projects/908504960338/locations/global/workloadIdentityPools/github-identity-pool/providers/github-provider'
+          service_account: 'wif-ga-sa@able-involution-469103-f2.iam.gserviceaccount.com'  
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 363.0.0'
+          project_id: ${{ env.PROJECT_ID }}
+
+      # Verify authentication
+      - name: Test GCP access
+        run: |
+          echo "Testing GCP authentication..."
+          gcloud auth list
+          gcloud config get-value project    
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Pulumi CLI
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH 
+
+      # Install uv and add it to PATH
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      # (optional) show version for sanity
+      - run: uv --version
+
+      # Make the component importable echo "PYTHONPATH=$GITHUB_WORKSPACE/components:$PYTHONPATH" >> $GITHUB_ENV
+      - name: Add component/ to PYTHONPATH and pulumi "PULUMI_CONFIG_PASSPHRASE
+        run: |
+          echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV    
+
+      # Use uv to install dependencies with more verbose output
+      - name: Install python dependencies with uv
+        working-directory: "programs/warpstream-agents"   
+        run: |
+          echo "=== Installing dependencies with uv ==="
+          # Install dependencies using uv with verbose output
+          uv pip install --system --verbose -r requirements.txt
+          echo "=== Checking installed packages ==="
+          uv pip list --system   
+       
           
-
-      # - name: Deploy with Pulumi
-      #   working-directory: programs/gke-cluster
-      #   run: |
-      #     echo "=== Starting Deployment ==="
+      - name: Deploy Warpstream cluster with Pulumi
+        working-directory: programs/warpstream-agents
+        run: |
+          echo "=== Starting Deployment ==="
           
-      #     # Use bucket backend
-      #     pulumi login gs://ashish-pulumi-backend-state
+          # Use bucket backend
+          pulumi login gs://ashish-pulumi-backend-state
 
-      #     # Activate the virtual environment
-      #     echo "Activating virtual environment..."
-
-      #     . .venv/bin/activate
-      #     which python
-      #     python --version
-      #     pulumi about
-      #     echo "Python path in venv:"
-      #     python -c "import sys; print('\n'.join(sys.path))"
+           # Let Pulumi handle its own dependencies first
+          pulumi install || true
           
-      #     pulumi install || true                    # optional; 'up' will install anyway
-      #     echo "=== Pulumi components installed ==="
-      #     # Select stack
-      #     pulumi stack select organization/gke-cluster/dev --create
-
-      #     # Deploy!
-      #     pulumi up --yes --color always --verbose 8 --logtostderr
+          # Force install components after Pulumi's install
+          echo "=== Force installing components ==="
+          . .venv/bin/activate
           
-      #     echo "Dev Stack Deployment complete. Stack information:"
-      #     pulumi stack output --json
-        
-  # deploy-warpstream-agents:
-  #   needs: deploy-gke-cluster
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4.1.6
-
-  #     - name: Authenticate to GCP (OIDC)
-  #       uses: google-github-actions/auth@v1.0.0
-  #       with:
-  #         token_format: access_token
-  #         workload_identity_provider: 'projects/908504960338/locations/global/workloadIdentityPools/github-identity-pool/providers/github-provider'
-  #         service_account: 'wif-ga-sa@able-involution-469103-f2.iam.gserviceaccount.com'  
-
-  #     - name: Set up Cloud SDK
-  #       uses: google-github-actions/setup-gcloud@v2
-  #       with:
-  #         version: '>= 363.0.0'
-  #         project_id: ${{ env.PROJECT_ID }}
-
-  #     # Verify authentication
-  #     - name: Test GCP access
-  #       run: |
-  #         echo "Testing GCP authentication..."
-  #         gcloud auth list
-  #         gcloud config get-value project    
-
-  #     - name: Setup python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.11'
-
-  #     - name: Install Pulumi CLI
-  #       run: |
-  #         curl -fsSL https://get.pulumi.com | sh
-  #         echo "$HOME/.pulumi/bin" >> $GITHUB_PATH 
-
-  #     - name: Install python dependencies
-  #       working-directory: "${{ env.PROGRAMS_DIR }}"   
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         if [ -f requirements.txt ]; then
-  #           pip install -r requirements.txt 
-  #         else
-  #           pip install pulumi pulumi-gcp pulumi-kubernetes pyyaml
-  #         fi
-
-  #     # Install uv and add it to PATH
-  #     - name: Install uv
-  #       uses: astral-sh/setup-uv@v6
-
-  #     # (optional) show version for sanity
-  #     - run: uv --version
-
-  #     # Make the component importable
-  #     - name: Add component/ to PYTHONPATH and pulumi "PULUMI_CONFIG_PASSPHRASE
-  #       run: |
-  #         echo "PYTHONPATH=$GITHUB_WORKSPACE/component:$PYTHONPATH" >> $GITHUB_ENV
-  #         echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV      
-
-  #     - name: Deploy with Pulumi
-  #       working-directory: programs/warpstream-agents
-  #       run: |
-  #         echo "=== Starting Deployment ==="
+          # Uninstall any existing version
+          pip uninstall -y components || true
           
-  #         # Use bucket backend
-  #         pulumi login gs://ashish-pulumi-backend-state
+          # Fresh install 
+          pip install -e "$GITHUB_WORKSPACE/components"
           
-  #         # Select stack
-  #         pulumi stack select organization/warpstream-agents/dev --create
+          # Verify it's working
+          echo "=== Verification ==="
+          pip list | grep components
+          python -c "from warpstreamagents.warpstream_cluster import WarpstreamCluster, WarpstreamClusterArgs; print('✅ Components ready')"
           
-  #         # Deploy!
-  #         pulumi up --yes --color always --verbose 3 --logtostderr
+          # Leave venv activated for pulumi up
+          echo "=== Selecting stack ==="
+          pulumi stack select organization/warpstream-agents/dev --create
+          echo "=== Running pulumi up ==="
+          pulumi up --yes --color always --verbose 3 --logtostderr
+          deactivate
+            
+          echo "Dev Stack Deployment complete. Stack information:"
+          pulumi stack output --json
           
-  #         echo "Dev Stack Deployment complete. Stack information:"
-  #         pulumi stack output --json       
+          
