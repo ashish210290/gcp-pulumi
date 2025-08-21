@@ -312,7 +312,7 @@ jobs:
           echo "=== Verification ==="
           pip list | grep components
           python -c "from warpstreamagents.warpstream_cluster import WarpstreamCluster, WarpstreamClusterArgs; print('✅ Components ready')"
-          
+         
           # Leave venv activated for pulumi up
           echo "=== Selecting stack ==="
           pulumi stack select organization/warpstream-agents/dev --create
