@@ -274,11 +274,20 @@ class WarpstreamCluster(ComponentResource):
             ),
         )
 
+        # 1) GSA email as Output[str]
+        gsa_email_out = (gsa.email if gsa is not None
+                        else pulumi.Output.from_input(args.gsa_email))
+
+        # 2) KSA name as Output[str] (since you explicitly set the name, wrapping is fine)
+        ksa_name_out = pulumi.Output.from_input(ksa_name)
+
+        # -------------------
         # Outputs
+        # -------------------
         self.bucket_name = bucket.name
-        self.gsa_email   = gsa.email
-        self.ksa_name    = sa_name_out
-        self.k8s_provider= provider
+        self.gsa_email   = gsa_email_out
+        self.ksa_name    = ksa_name_out
+        self.k8s_provider = provider
 
         self.register_outputs({
             "bucketName": self.bucket_name,
