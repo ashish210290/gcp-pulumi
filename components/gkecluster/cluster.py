@@ -192,7 +192,7 @@ class GKECluster(pulumi.ComponentResource):
         secrets ={
             "kubeconfig": {
                 "secret_id": kubeconfig_secret_id,
-                "data": self.kubeconfig,
+                "data": kubeconfig_out,
             },
             "cluster_name": {
                 "secret_id": cluster_name_secret_id,
