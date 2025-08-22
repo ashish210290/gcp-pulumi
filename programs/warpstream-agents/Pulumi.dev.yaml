@@ -3,12 +3,12 @@ config:
   gcp:project: able-involution-469103-f2
   gcp:region: "northamerica-northeast1"
 
-  warpstream:gkeStackRef: organization/gke-cluster/dev
+  warpstream:gkeStackRef: organization/warpstream-agents/dev
   warpstream:bucketName: warpstream-gke-bucket-lab
   warpstream:namespace: warpstream
   warpstream:kubeconfigSecretId: ws-warpstream-cluster-kubeconfig # Secret containing kubeconfig for WarpStream GKE cluster
-  warpstream:agentKey: aks_a96ec3e47cffced596454071e1b6eff298ff290b4bbeb7e00022ded402fcb884
-  warpstream:virtualClusterID: vci_8122bd76_5d22_46a7_baf7_07aad21d69d1
+  warpstream:agentKeySecretId: warpstream-agent-key
+  warpstream:virtualClusterIdSecretId: warpstream-virtual-cluster-id
   warpstream:warpstreamRegion: us-central1
   warpstream:chartVersion: 0.15.25
   warpstream:gkeClusterName: ws-warpstream-cluster-cluster-name
