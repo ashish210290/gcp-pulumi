@@ -246,8 +246,9 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          version: '>= 363.0.0'
+          version: '>= 470.0.0'
           project_id: ${{ env.PROJECT_ID }}
+          install_components: 'gke-gcloud-auth-plugin'
 
       # Verify authentication
       - name: Test GCP access
