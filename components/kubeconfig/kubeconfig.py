@@ -42,5 +42,6 @@ users:
       installHint: >-
         Install gke-gcloud-auth-plugin: https://cloud.google.com/blog/products/containers-kubernetes/kubectl-auth-changes-in-gke
       provideClusterInfo: true
+      interactiveMode: false
 """
     return Output.all(n, e, c).apply(lambda xs: _render(*xs))
