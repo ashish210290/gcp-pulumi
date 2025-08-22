@@ -19,6 +19,11 @@ component = WarpstreamCluster(
 
         bucket_name=ws_cfg.get("bucketName") or "",   # optional
         force_destroy_bucket=True,
+        
+        # GSA / KSA
+        gsa_email=ws_cfg.get("gsaEmail"),             # optional
+        ksa_name=ws_cfg.get("ksaName") or "warpstream-agent-ksa",
+        grant_bucket_roles=bool(ws_cfg.get_bool("grantBucketRoles")),  # default: True
 
         # TLS in Secret Manager (optional)
         gcp_tls_cert_secret_id=ws_cfg.get("gcpTlsCertSecretId"),

@@ -37,7 +37,7 @@ config:
     servicesIpv4CidrBlock: "10.8.0.0/20"
 
     # Master Authorized Network
-    cidrBlock: "0.0.0.0/8"
+    cidrBlock: "0.0.0.0/0"
     displayName: "WarpStream Internal Access"
 
     # WarpStream GCS Bucket

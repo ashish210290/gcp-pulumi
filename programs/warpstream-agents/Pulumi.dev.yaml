@@ -17,6 +17,10 @@ config:
   warpstream:id: "1"
   warpstream:valuesFile: values.yaml
 
+  warpstream:gsaEmail: id-warpstream-gsa@able-involution-469103-f2.iam.gserviceaccount.com
+  warpstream:ksaName: warpstream-agent-ksa
+  warpstream:grantBucketRoles: false
+
   # Secret Manager Configuration
   warpstream:gcpTlsCertSecretName: warpstream-tls-certificate # GCP secret containing full TLS cert (source)
   warpstream:gcpCaCertSecretName: wstream-ca-cert # GCP secret where CA cert will be saved (destination)

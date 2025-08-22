@@ -26,6 +26,10 @@ class WarpstreamClusterArgs:
     kubeconfig_secret_id: str          # SM secret holding kubeconfig
     namespace: str = "warpstream"
     stack_prefix: str = "ws"
+    
+    gsa_email: Optional[str]   # if set, use this GSA instead of creating one
+    ksa_name: Optional[str]    # override KSA name (defaults to "<prefix>-<ns>-sa")
+    grant_bucket_roles: bool   # default True; set False to skip bucket grants
 
     # Storage
     bucket_name: str = ""              # if empty => create "{stack_prefix}-{namespace}-bucket"
@@ -84,42 +88,106 @@ class WarpstreamCluster(ComponentResource):
             opts=ResourceOptions(parent=self),
         )
 
-        # --- 4) Workload Identity: GSA + KSA + bindings ---
-        ksa_name = args.ksa_name or f"{args.stack_prefix}-{args.namespace}-sa"
-        gsa = gcp.serviceaccount.Account(
-            f"{name}-gsa",
-            project=args.project_id,
-            account_id=f"{args.stack_prefix}-{args.namespace}-sa",
-            display_name=f"WarpStream SA ({args.namespace})",
-            description="GSA for WarpStream Agent",
-            opts=ResourceOptions(parent=self),
-        )
-        # bucket access
-        gcp.storage.BucketIAMMember(
-            f"{name}-bucket-wi",
-            bucket=bucket.name,
-            role="roles/storage.objectAdmin",
-            member=gsa.email.apply(lambda e: f"serviceAccount:{e}"),
-            opts=ResourceOptions(parent=bucket),
-        )
-        # WI binding
-        gcp.serviceaccount.IAMBinding(
-            f"{name}-wi-binding",
-            service_account_id=gsa.name,
+        # --- 4) Workload Identity: (existing) GSA + KSA + bindings ---
+        ksa_name = args.get("ksa_name") or f"{args['stack_prefix']}-{args['namespace']}-sa"
+        use_existing_gsa = bool(args.get("gsa_email"))
+        grant_bucket_roles = args.get("grant_bucket_roles", True)
+
+        if use_existing_gsa:
+            # Use the provided GSA (no creation)
+            gsa_email_out = pulumi.Output.from_input(args["gsa_email"])
+            # Most google APIs accept either email or resource name; build resource-name for safety:
+            gsa_resource_id = pulumi.Output.format(
+                "projects/{project}/serviceAccounts/{email}",
+                project=args["project_id"], email=gsa_email_out
+            )
+        else:
+            # Create a new GSA
+            gsa = gcp.serviceaccount.Account(
+                f"{name}-gsa",
+                project=args["project_id"],
+                account_id=f"{args['stack_prefix']}-{args['namespace']}-sa",
+                display_name=f"WarpStream SA ({args['namespace']})",
+                description="GSA for WarpStream Agent",
+                opts=ResourceOptions(parent=self),
+            )
+            gsa_email_out = gsa.email
+            gsa_resource_id = gsa.name
+
+        # (Optional) grant the GSA objectAdmin on your bucket so the agent can use it
+        if grant_bucket_roles:
+            gcp.storage.BucketIAMMember(
+                f"{name}-bucket-wi",
+                bucket=bucket.name,
+                role="roles/storage.objectAdmin",
+                member=gsa_email_out.apply(lambda e: f"serviceAccount:{e}"),
+                opts=ResourceOptions(parent=bucket),
+            )
+
+        # Bind WI: allow KSA to impersonate the GSA
+        # Use IAMMember (additive) to avoid clobbering existing bindings.
+        wi_member = gcp.serviceaccount.IAMMember(
+            f"{name}-wi-member",
+            service_account_id=gsa_resource_id,
             role="roles/iam.workloadIdentityUser",
-            members=[f"serviceAccount:{args.project_id}.svc.id.goog[{args.namespace}/{ksa_name}]"],
-            opts=ResourceOptions(parent=gsa),
+            member=pulumi.Output.format(
+                "serviceAccount:{proj}.svc.id.goog[{ns}/{ksa}]",
+                proj=args["project_id"], ns=args["namespace"], ksa=ksa_name,
+            ),
+            # If you created the GSA above, parent to it; otherwise parent to component
+            opts=ResourceOptions(parent=gsa if not use_existing_gsa else self),
         )
-        # KSA with WI annotation
+
+        # KSA with WI annotation that points to the GSA email
         ksa = k8s.core.v1.ServiceAccount(
             f"{name}-ksa",
             metadata={
-                "name": ksa_name, "namespace": args.namespace,
-                "annotations": {"iam.gke.io/gcp-service-account": gsa.email},
-                "labels": {"app":"warpstream-agent","stack":args.stack_prefix},
+                "name": ksa_name,
+                "namespace": args["namespace"],
+                "annotations": {
+                    "iam.gke.io/gcp-service-account": gsa_email_out,  # <-- the email, not resource-id
+                },
+                "labels": {"app": "warpstream-agent", "stack": args["stack_prefix"]},
             },
-            opts=ResourceOptions(parent=ns, provider=provider),
+            opts=ResourceOptions(parent=ns, provider=provider, depends_on=[wi_member]),
         )
+
+        # # --- 4) Workload Identity: GSA + KSA + bindings ---
+        # ksa_name = args.ksa_name or f"{args.stack_prefix}-{args.namespace}-sa"
+        # gsa = gcp.serviceaccount.Account(
+        #     f"{name}-gsa",
+        #     project=args.project_id,
+        #     account_id=f"{args.stack_prefix}-{args.namespace}-sa",
+        #     display_name=f"WarpStream SA ({args.namespace})",
+        #     description="GSA for WarpStream Agent",
+        #     opts=ResourceOptions(parent=self),
+        # )
+        # # bucket access
+        # gcp.storage.BucketIAMMember(
+        #     f"{name}-bucket-wi",
+        #     bucket=bucket.name,
+        #     role="roles/storage.objectAdmin",
+        #     member=gsa.email.apply(lambda e: f"serviceAccount:{e}"),
+        #     opts=ResourceOptions(parent=bucket),
+        # )
+        # # WI binding
+        # gcp.serviceaccount.IAMBinding(
+        #     f"{name}-wi-binding",
+        #     service_account_id=gsa.name,
+        #     role="roles/iam.workloadIdentityUser",
+        #     members=[f"serviceAccount:{args.project_id}.svc.id.goog[{args.namespace}/{ksa_name}]"],
+        #     opts=ResourceOptions(parent=gsa),
+        # )
+        # # KSA with WI annotation
+        # ksa = k8s.core.v1.ServiceAccount(
+        #     f"{name}-ksa",
+        #     metadata={
+        #         "name": ksa_name, "namespace": args.namespace,
+        #         "annotations": {"iam.gke.io/gcp-service-account": gsa.email},
+        #         "labels": {"app":"warpstream-agent","stack":args.stack_prefix},
+        #     },
+        #     opts=ResourceOptions(parent=ns, provider=provider),
+        # )
 
         # --- 5) (optional) TLS secret from Secret Manager (JSON: tls.crt/tls.key/ca.crt) ---
         tls_secret = None

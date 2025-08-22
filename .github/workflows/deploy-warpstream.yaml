@@ -25,8 +25,7 @@ env:
 
 jobs:
   deploy-warpstream-cluster:
-    runs-on: ubuntu-latest
-    needs: [deploy-gke-cluster] 
+    runs-on: ubuntu-latest 
 
     steps:
       - name: Checkout repository
