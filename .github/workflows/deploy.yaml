@@ -217,7 +217,7 @@ jobs:
           
           # Leave venv activated for pulumi up
           echo "=== Selecting stack ==="
-          pulumi stack select organization/gke-cluster/dev --create
+          pulumi stack select dev --create
           echo "=== Running pulumi up ==="
           pulumi up --yes --color always --verbose 3 --logtostderr
           deactivate
@@ -315,7 +315,7 @@ jobs:
          
           # Leave venv activated for pulumi up
           echo "=== Selecting stack ==="
-          pulumi stack select organization/warpstream-agents/dev --create
+          pulumi stack select dev --create
           echo "=== Running pulumi up ==="
           pulumi up --yes --color always --verbose 3 --logtostderr
           deactivate
