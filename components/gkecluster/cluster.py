@@ -206,8 +206,6 @@ class GKECluster(pulumi.ComponentResource):
                         "https://www.googleapis.com/auth/monitoring",
                     ]),
                     preemptible=bool(args.get("preemptible_nodes", False)),
-                    labels=node_labels,
-                    taints=node_taints,
                 ),
                 autoscaling=gcp.container.NodePoolAutoscalingArgs(
                     min_node_count=int(args.get("min_count", 1)),
