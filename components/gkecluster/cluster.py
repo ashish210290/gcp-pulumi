@@ -175,6 +175,55 @@ class GKECluster(pulumi.ComponentResource):
             opts=ResourceOptions(parent=self),
         )  
         
+        # --- Managed NodePool for Standard clusters ---
+        if not enable_autopilot:
+            # Node labels/taints so only WarpStream agents land here
+            node_labels = {"warpstream": "agent"}
+            node_taints = [
+                gcp.container.NodePoolNodeConfigTaintArgs(
+                    key="warpstream",
+                    value="agent",
+                    effect="NO_SCHEDULE",  # requires toleration in your Deployment
+                )
+            ]
+
+            self.agent_pool = gcp.container.NodePool(
+                f"{name}-agent-pool",
+                project=project_id,
+                location=location,                  # same region/zone style as cluster
+                cluster=cluster.name,
+                initial_node_count=max(1, int(args.get("node_count", 1))),   # bootstrap count
+                node_config=gcp.container.NodePoolNodeConfigArgs(
+                    machine_type=args.get("machine_type", "n2-standard-8"),  # big enough for 4CPU/16Gi pod
+                    disk_size_gb=int(args.get("disk_size_gb", 100)),
+                    disk_type=args.get("disk_type", "pd-balanced"),
+                    service_account=args.get("node_service_account"),
+                    oauth_scopes=args.get("oauth_scopes", [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/compute",
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/logging.write",
+                        "https://www.googleapis.com/auth/monitoring",
+                    ]),
+                    preemptible=bool(args.get("preemptible_nodes", False)),
+                    labels=node_labels,
+                    taints=node_taints,
+                ),
+                autoscaling=gcp.container.NodePoolAutoscalingArgs(
+                    min_node_count=int(args.get("min_count", 1)),
+                    max_node_count=int(args.get("max_count", 3)),
+                ),
+                management=gcp.container.NodePoolManagementArgs(
+                    auto_repair=True,
+                    auto_upgrade=True,
+                ),
+                upgrade_settings=gcp.container.NodePoolUpgradeSettingsArgs(
+                    max_surge=1,
+                    max_unavailable=0,
+                ),
+                opts=ResourceOptions(parent=cluster),
+            )
+        
         stack_prefix = pulumi.Config("stack").get("prefix") or "ws"
         
         # Build the three secret ids
@@ -242,4 +291,5 @@ class GKECluster(pulumi.ComponentResource):
             "endpoint": self.endpoint,
             "ca_certificate": self.ca_certificate,
             "kubeconfig": self.kubeconfig,
+            "agent_pool_name": self.agent_pool.name
         })
