@@ -31,7 +31,7 @@ class WarpstreamClusterArgs:
     gsa_email: Optional[str] = None
     # If you want to force a specific KSA name; otherwise derive from prefix/ns.
     ksa_name: Optional[str] = None
-    grant_bucket_roles: bool   # default True; set False to skip bucket grants
+    grant_bucket_roles: bool  =  True # default True; set False to skip bucket grants
 
     # Storage
     bucket_name: str = ""              # if empty => create "{stack_prefix}-{namespace}-bucket"
