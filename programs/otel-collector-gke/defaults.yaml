@@ -1,0 +1,27 @@
+nameOverride: otel-collector
+mode: daemonset
+presets:
+  hostMetrics:
+    enabled: true
+  kubernetesAttributes:
+    enabled: true
+  kubeletMetrics:
+    enabled: true
+  clusterMetrics:
+    enabled: true
+
+# Minimal working pipeline; tailor per app via overrides
+config:
+  receivers:
+    otlp:
+      protocols: { grpc: {}, http: {} }
+  processors:
+    batch: {}
+  exporters:
+    logging: {}
+  service:
+    pipelines:
+      metrics:
+        receivers: [otlp]
+        processors: [batch]
+        exporters: [logging]

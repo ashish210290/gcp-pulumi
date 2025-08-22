@@ -1,0 +1,6 @@
+encryptionsalt: v1:9unYLvsib24=:v1:0lJwDoyCP9We1S2R:pn+NCb6bQ+kIHm9SWl9qW+689GN/0A==
+config:
+  gcp:project: able-involution-469103-f2
+
+  otel-collector-gke:apps:
+    - warpstream.yaml

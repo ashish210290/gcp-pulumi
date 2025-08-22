@@ -1,0 +1,10 @@
+name: otel-collector-gke
+description: A pulumi program to deploy OpenTelemetry-collector to existing App in GKE
+runtime:
+  name: python
+  options:
+    toolchain: uv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: gcp-python

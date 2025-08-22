@@ -1,0 +1,93 @@
+name: app1
+secretManager:
+  secret: projects/ABLE_PROJ/secrets/warpstream-kubeconfig  # <-- change to your kubeconfig secret ID
+  version: latest
+namespace: wrapstream
+
+helm:
+  chart: opentelemetry-collector
+  repo: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.99.0
+  values:
+    nameOverride: otel-warpstream
+    # Choose how you want to run the collector (daemonset|deployment)
+    mode: deployment
+
+    # Full collector config matching your working setup
+    config:
+      receivers:
+        prometheus:
+          config:
+            scrape_configs:
+            - job_name: 'warpstream-agent'
+              kubernetes_sd_configs:
+              - role: pod
+              relabel_configs:
+              # namespace filter
+              - source_labels: [__meta_kubernetes_namespace]
+                action: keep
+                regex: wrapstream
+              # only pods with app=warpstream-agent
+              - source_labels: [__meta_kubernetes_pod_label_app]
+                action: keep
+                regex: warpstream-agent
+              # set metrics path
+              - action: replace
+                target_label: __metrics_path__
+                replacement: /metrics
+              # <pod_ip>:8080
+              - action: replace
+                source_labels: [__meta_kubernetes_pod_ip]
+                regex: (.+)
+                target_label: __address__
+                replacement: "$$1:8080"
+
+      processors:
+        # add GCP resource attrs (cluster, project, location) automatically
+        resourcedetection:
+          detectors: [gcp]
+          timeout: 10s
+        # keep memory safe
+        memory_limiter:
+          check_interval: 1s
+          limit_percentage: 65
+          spike_limit_percentage: 20
+        # batch outgoing metrics for efficiency
+        batch:
+          send_batch_size: 200
+          send_batch_max_size: 200
+          timeout: 5s
+        # OPTIONAL: move potentially reserved labels to exported_* to avoid conflicts
+        transform:
+          metric_statements:
+          - context: datapoint
+            statements:
+            - set(attributes["exported_location"], attributes["location"])
+            - delete_key(attributes, "location")
+            - set(attributes["exported_cluster"], attributes["cluster"])
+            - delete_key(attributes, "cluster")
+            - set(attributes["exported_namespace"], attributes["namespace"])
+            - delete_key(attributes, "namespace")
+            - set(attributes["exported_job"], attributes["job"])
+            - delete_key(attributes, "job")
+            - set(attributes["exported_instance"], attributes["instance"])
+            - delete_key(attributes, "instance")
+            - set(attributes["exported_project_id"], attributes["project_id"])
+            - delete_key(attributes, "project_id")
+
+      exporters:
+        # Managed Service for Prometheus (PromQL-ready)
+        googlemanagedprometheus:
+          # If omitted, uses the cluster's project from ADC.
+          # project: YOUR_MONITORING_PROJECT_ID
+        # Optional: for debugging. Remove in prod if too chatty.
+        logging:
+          loglevel: info
+
+      service:
+        pipelines:
+          metrics:
+            receivers: [prometheus]
+            processors: [memory_limiter, batch, resourcedetection, transform]
+            exporters: [googlemanagedprometheus, logging]
+

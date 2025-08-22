@@ -19,7 +19,7 @@ config:
     nodeCount: 3
     machineType: "n4-standard-2"  # 2 vCPUs, 8 GB RAM
     diskSizeGb: 100               # 100 GB disk size
-    diskType: "pd-balanced"            # SSD for better performance
+    diskType: "pd-ssd"            # SSD for better performance
 
     # Network configurations
     NetworkName: "vpc-network-01"
