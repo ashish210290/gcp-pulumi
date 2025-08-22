@@ -1,7 +1,7 @@
 import pulumi
 from warpstreamagents.warpstream_cluster import WarpstreamCluster, WarpstreamClusterArgs
 
-cfg     = pulumi.Config()
+ws_cfg  = pulumi.Config("warpstream")
 gcp_cfg = pulumi.Config("gcp")
 
 project = gcp_cfg.require("project")
@@ -12,29 +12,29 @@ component = WarpstreamCluster(
     WarpstreamClusterArgs(
         project_id=project,
         region=region,
-        kubeconfig_secret_id=cfg.require("kubeconfigSecretId"),
+        kubeconfig_secret_id=ws_cfg.require("kubeconfigSecretId"),
 
-        namespace=cfg.get("namespace") or "warpstream",
-        stack_prefix=cfg.get("stackPrefix") or "ws",
+        namespace=ws_cfg.get("namespace") or "warpstream",
+        stack_prefix=ws_cfg.get("stackPrefix") or "ws",
 
-        bucket_name=cfg.get("bucketName") or "",   # optional
+        bucket_name=ws_cfg.get("bucketName") or "",   # optional
         force_destroy_bucket=True,
 
         # TLS in Secret Manager (optional)
-        gcp_tls_cert_secret_id=cfg.get("gcpTlsCertSecretId"),
-        k8s_tls_secret_name=cfg.get("k8sTlsSecretName") or "warpstream-tls",
+        gcp_tls_cert_secret_id=ws_cfg.get("gcpTlsCertSecretId"),
+        k8s_tls_secret_name=ws_cfg.get("k8sTlsSecretName") or "warpstream-tls",
 
         # Helm
-        chart_version=cfg.get("chartVersion") or "0.1.19",
-        values_template_path=cfg.get("valuesFile") or "values.yaml",
+        chart_version=ws_cfg.get("chartVersion") or "0.1.19",
+        values_template_path=ws_cfg.get("valuesFile") or "values.yaml",
 
         # Secrets for placeholders
-        agent_key_secret_id=cfg.require("agentKeySecretId"),
-        virtual_cluster_id_secret_id=cfg.require("virtualClusterIdSecretId"),
+        agent_key_secret_id=ws_cfg.require("agentKeySecretId"),
+        virtual_cluster_id_secret_id=ws_cfg.require("virtualClusterIdSecretId"),
 
         # Optional placeholders
-        dns_record_name=cfg.get("dnsRecordName"),
-        warpstream_region=cfg.get("warpstreamRegion") or region,
+        dns_record_name=ws_cfg.get("dnsRecordName"),
+        warpstream_region=ws_cfg.get("warpstreamRegion") or region,
     ),
 )
 
