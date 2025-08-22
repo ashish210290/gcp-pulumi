@@ -17,8 +17,8 @@ config:
 
     # Node configurations optimized for WarpStream
     nodeCount: 3
-    machineType: "n2-standard-2"  # 2 vCPUs, 8 GB RAM
-    diskSizeGb: 100               # 100 GB disk size
+    machineType: "e2-standard-2"  # 2 vCPUs, 8 GB RAM
+    diskSizeGb: 50               # 100 GB disk size
     diskType: "pd-ssd"            # SSD for better performance
 
     # Network configurations
