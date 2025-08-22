@@ -27,8 +27,10 @@ class WarpstreamClusterArgs:
     namespace: str = "warpstream"
     stack_prefix: str = "ws"
     
-    gsa_email: Optional[str]   # if set, use this GSA instead of creating one
-    ksa_name: Optional[str]    # override KSA name (defaults to "<prefix>-<ns>-sa")
+    # If provided, use this existing GSA; otherwise create one.
+    gsa_email: Optional[str] = None
+    # If you want to force a specific KSA name; otherwise derive from prefix/ns.
+    ksa_name: Optional[str] = None
     grant_bucket_roles: bool   # default True; set False to skip bucket grants
 
     # Storage
