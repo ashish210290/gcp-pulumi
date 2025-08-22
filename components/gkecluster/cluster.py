@@ -179,14 +179,14 @@ class GKECluster(pulumi.ComponentResource):
         
         # Build the three secret ids
         kubeconfig_secret_id = pulumi.Output.format("{prefix}-{name}-kubeconfig", prefix=stack_prefix, name=cluster.name)
-        endpoint_secret_id = pulumi.Output.format("{prefix}-{name}-cluster-name", prefix=stack_prefix, name=cluster.name)
-        cluster_name_secret_id = pulumi.Output.format("{prefix}-{name}-cluster-endpoint", prefix=stack_prefix, name=cluster.name)
+        endpoint_secret_id = pulumi.Output.format("{prefix}-{name}-cluster-endpoint", prefix=stack_prefix, name=cluster.name)
+        cluster_name_secret_id = pulumi.Output.format("{prefix}-{name}-cluster-name", prefix=stack_prefix, name=cluster.name)
         
         
         # Build kubeconfig straight from cluster outputs
         ca_out = cluster.master_auth.apply(lambda m: m.cluster_ca_certificate)
-        self.kubeconfig = pulumi.Output.secret(
-            kubeconfig_gke_exec(self.name, self.endpoint, self.ca_certificate)
+        kubeconfig_out = pulumi.Output.secret(
+            kubeconfig_gke_exec(cluster.name, cluster.endpoint, ca_out)
         )
         
         secrets ={
@@ -233,8 +233,8 @@ class GKECluster(pulumi.ComponentResource):
         self.name = cluster.name
         self.location = cluster.location
         self.endpoint = cluster.endpoint
-        self.ca_certificate = ca
-        self.kubeconfig = pulumi.Output.secret(kubeconfig_gke_exec(self.name, self.endpoint, self.ca_certificate))
+        self.ca_certificate = ca_out
+        self.kubeconfig = kubeconfig_out
 
         self.register_outputs({
             "name": self.name,
