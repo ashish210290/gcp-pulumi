@@ -1,0 +1,124 @@
+ #New Job for WarpStream Agent Deployment
+name: Deploy warpstream and kafkaconnect to Production
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'programs/warpstream-agents/**'
+      - 'components/warpstreamagents/**'
+      - '.github/workflows/deploy-warpstream.yaml'
+      
+
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read  
+
+env:
+  PULUMI_BACKEND_URL:  "gs://ashish-pulumi-backend-state"
+  PROGRAMS_DIR: "programs"
+  PROJECT_ID: "able-involution-469103-f2"
+  WIP: "projects/908504960338/locations/global/workloadIdentityPools/github-identity-pool/providers/github-provider"
+  SA: "wif-ga-sa@able-involution-469103-f2.iam.gserviceaccount.com"
+  USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
+
+jobs:
+  deploy-warpstream-cluster:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.6
+
+      - name: Authenticate to GCP (OIDC)
+        uses: google-github-actions/auth@v1.0.0
+        with:
+          token_format: access_token
+          workload_identity_provider: 'projects/908504960338/locations/global/workloadIdentityPools/github-identity-pool/providers/github-provider'
+          service_account: 'wif-ga-sa@able-involution-469103-f2.iam.gserviceaccount.com'  
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 363.0.0'
+          project_id: ${{ env.PROJECT_ID }}
+
+      # Verify authentication
+      - name: Test GCP access
+        run: |
+          echo "Testing GCP authentication..."
+          gcloud auth list
+          gcloud config get-value project    
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Pulumi CLI
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH 
+
+      # Install uv and add it to PATH
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      # (optional) show version for sanity
+      - run: uv --version
+
+      # Make the component importable echo "PYTHONPATH=$GITHUB_WORKSPACE/components:$PYTHONPATH" >> $GITHUB_ENV
+      - name: Add component/ to PYTHONPATH and pulumi "PULUMI_CONFIG_PASSPHRASE
+        run: |
+          echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV    
+
+      # Use uv to install dependencies with more verbose output
+      - name: Install python dependencies with uv
+        working-directory: "programs/warpstream-agents"   
+        run: |
+          echo "=== Installing dependencies with uv ==="
+          # Install dependencies using uv with verbose output
+          uv pip install --system --verbose -r requirements.txt
+          echo "=== Checking installed packages ==="
+          uv pip list --system   
+       
+          
+      - name: Deploy Warpstream cluster with Pulumi
+        working-directory: programs/warpstream-agents
+        run: |
+          echo "=== Starting Deployment ==="
+          
+          # Use bucket backend
+          pulumi login gs://ashish-pulumi-backend-state
+
+           # Let Pulumi handle its own dependencies first
+          pulumi install || true
+          
+          # Force install components after Pulumi's install
+          echo "=== Force installing components ==="
+          . .venv/bin/activate
+          
+          # Uninstall any existing version
+          pip uninstall -y components || true
+          
+          # Fresh install 
+          pip install -e "$GITHUB_WORKSPACE/components"
+          
+          # Verify it's working
+          echo "=== Verification ==="
+          pip list | grep components
+          python -c "from warpstreamagents.warpstream_cluster import WarpstreamCluster, WarpstreamClusterArgs; print('✅ Components ready')"
+         
+          # Leave venv activated for pulumi up
+          echo "=== Selecting stack ==="
+          pulumi stack select dev --create
+          echo "=== Running pulumi up ==="
+          pulumi up --yes --color always --verbose 3 --logtostderr
+          deactivate
+            
+          echo "Dev Stack Deployment complete. Stack information:"
+          pulumi stack output --json
+          
+          

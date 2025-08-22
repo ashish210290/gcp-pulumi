@@ -4,8 +4,9 @@ on:
     branches:
       - main
     paths:
-      - 'programs/**'
-      - 'components/**'
+      - 'programs/gke-cluster/**'
+      - 'components/gkecluster/**'
+      - 'components/kubeconfig/**'
       - '.github/workflows/deploy.yaml'
       - '.github/workflows/gcp.yaml'
 

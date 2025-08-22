@@ -2,7 +2,7 @@ import pulumi
 from pulumi import Output, ResourceOptions
 import pulumi_gcp as gcp
 from typing import Optional, List, Dict, Any, TypedDict
-from kubeconfig.kubeconfig import kubeconfig_gcp_user 
+from kubeconfig.kubeconfig import kubeconfig_gke_exec 
 
 def _self_link_network(project: str, network_name: Optional[str]) -> Optional[str]:
     if not network_name:
@@ -186,7 +186,7 @@ class GKECluster(pulumi.ComponentResource):
         # Build kubeconfig straight from cluster outputs
         ca_out = cluster.master_auth.apply(lambda m: m.cluster_ca_certificate)
         self.kubeconfig = pulumi.Output.secret(
-            kubeconfig_gcp_user(cluster.name, cluster.endpoint, ca_out)
+            kubeconfig_gke_exec(self.name, self.endpoint, self.ca_certificate)
         )
         
         secrets ={
@@ -234,7 +234,7 @@ class GKECluster(pulumi.ComponentResource):
         self.location = cluster.location
         self.endpoint = cluster.endpoint
         self.ca_certificate = ca
-        self.kubeconfig = pulumi.Output.secret(kubeconfig_gcp_user(self.name, self.endpoint, self.ca_certificate))
+        self.kubeconfig = pulumi.Output.secret(kubeconfig_gke_exec(self.name, self.endpoint, self.ca_certificate))
 
         self.register_outputs({
             "name": self.name,
