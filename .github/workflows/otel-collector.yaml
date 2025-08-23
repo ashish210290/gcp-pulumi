@@ -166,7 +166,7 @@ jobs:
           # Ensure GKE exec plugin env is available for kubeconfig:
           USE_GKE_GCLOUD_AUTH_PLUGIN: ${{ env.USE_GKE_GCLOUD_AUTH_PLUGIN }}
         run: |
-          pulumi stack select "${PULUMI_STACK}" --create
+          pulumi stack select dev --create
           pulumi up --yes --color always --verbose 3 --logtostderr --refresh
           echo "=== Stack outputs ==="
           pulumi stack output --json  
