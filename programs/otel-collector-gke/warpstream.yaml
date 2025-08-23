@@ -9,6 +9,8 @@ helm:
   repo: https://open-telemetry.github.io/opentelemetry-helm-charts
   version: 0.99.0
   values:
+    image:
+      repository: otel/opentelemetry-collector-contrib
     nameOverride: otel-warpstream
     # Choose how you want to run the collector (daemonset|deployment)
     mode: deployment
