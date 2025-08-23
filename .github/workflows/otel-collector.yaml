@@ -113,8 +113,8 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           token_format: access_token
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SA }}
+          workload_identity_provider: ${{ env.WIP }}
+          service_account: ${{ env.SA }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
