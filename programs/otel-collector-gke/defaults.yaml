@@ -18,10 +18,11 @@ config:
   processors:
     batch: {}
   exporters:
+    googlemanagedprometheus: {}
     logging: {}
   service:
     pipelines:
       metrics:
         receivers: [otlp]
         processors: [batch]
-        exporters: [logging]
+        exporters: [googlemanagedprometheus, logging]

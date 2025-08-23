@@ -1,0 +1,172 @@
+name: Deploy Otel Collector to WarpStream GKE Cluster
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'programs/otel-collector-gke/**'
+      - '.github/workflows/otel-collector.yaml'
+    
+  pull_request:
+    branches: 
+      - main 
+    paths:
+      - 'programs/otel-collector-gke/**'
+      - '.github/workflows/otel-collector.yaml'    
+
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read  
+
+concurrency:
+  group: deploy-otel-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  WORKDIR: programs/otel-collector-gke 
+  PULUMI_BACKEND_URL:  "gs://ashish-pulumi-backend-state"
+  PROGRAMS_DIR: "programs"
+  PROJECT_ID: "able-involution-469103-f2"
+  WIP: "projects/908504960338/locations/global/workloadIdentityPools/github-identity-pool/providers/github-provider"
+  SA: "wif-ga-sa@able-involution-469103-f2.iam.gserviceaccount.com"
+  USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
+
+
+jobs:
+  preview-otel:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.6
+
+      - name: Authenticate to GCP (OIDC)
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}   # e.g. projects/123/locations/global/workloadIdentityPools/pool/providers/github
+          service_account: ${{ secrets.WIF_SA }}                    # e.g. wif-ga-sa@PROJECT_ID.iam.gserviceaccount.com
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 470.0.0'
+          project_id: ${{ env.PROJECT_ID }}
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: Verify GCP authentication
+        run: |
+          gcloud --version
+          gcloud auth list
+          gcloud config get-value project
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Pulumi CLI
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set Pulumi config passphrase
+        run: echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV
+
+      - name: Install Python dependencies (uv)
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          uv pip install --system --verbose -r requirements.txt
+          uv pip list --system
+
+      - name: Pulumi login (GCS backend) + install plugins
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          pulumi login "${PULUMI_BACKEND_URL}"
+          pulumi install || true
+
+      - name: Pulumi preview
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          pulumi stack select "${PULUMI_STACK}" --create
+          pulumi preview --color always --verbose 3 --logtostderr
+
+  deploy-otel:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.6
+
+      - name: Authenticate to GCP (OIDC)
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 470.0.0'
+          project_id: ${{ env.PROJECT_ID }}
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: Verify GCP authentication
+        run: |
+          gcloud --version
+          gcloud auth list
+          gcloud config get-value project
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Pulumi CLI
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set Pulumi config passphrase
+        run: echo "PULUMI_CONFIG_PASSPHRASE=${{ secrets.PULUMI_PASSPHRASE }}" >> $GITHUB_ENV
+
+      - name: Install Python dependencies (uv)
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          uv pip install --system --verbose -r requirements.txt
+          uv pip list --system
+
+      - name: Pulumi login (GCS backend) + install plugins
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          pulumi login "${PULUMI_BACKEND_URL}"
+          pulumi install || true
+
+      - name: Pulumi up (deploy)
+        working-directory: ${{ env.WORKDIR }}
+        env:
+          # If you ever switch to Pulumi SaaS backend, you can add: PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          # Not required for GCS backend.
+          #
+          # Ensure GKE exec plugin env is available for kubeconfig:
+          USE_GKE_GCLOUD_AUTH_PLUGIN: ${{ env.USE_GKE_GCLOUD_AUTH_PLUGIN }}
+        run: |
+          pulumi stack select "${PULUMI_STACK}" --create
+          pulumi up --yes --color always --verbose 3 --logtostderr --refresh
+          echo "=== Stack outputs ==="
+          pulumi stack output --json  

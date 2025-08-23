@@ -13,6 +13,9 @@ PROJECT = pulumi.get_project()
 STACK = pulumi.get_stack()
 
 # ---------- helpers ----------
+def dump_yaml(d: dict) -> str:
+    return yaml.safe_dump(d or {}, sort_keys=False)
+
 def deep_merge(a: dict, b: dict) -> dict:
     """Recursively merge dict b into a (b wins)."""
     out = dict(a or {})
@@ -127,6 +130,13 @@ for app_file in app_files:
     merged_values = deep_merge(defaults, helm_cfg.get("values", {}))
     helm_cfg_final = dict(helm_cfg)
     helm_cfg_final["values"] = merged_values
+    
+    final_values = helm_cfg_final["values"]
+    final_config = final_values.get("config", {})
+
+    # Log to console during preview/up
+    pulumi.log.info(f"--- [{app_name}] Helm values (merged)\n{dump_yaml(final_values)}")
+    pulumi.log.info(f"--- [{app_name}] Collector config (merged)\n{dump_yaml(final_config)}")
 
     # 5) Deploy Helm (OTel Collector)
     chart = deploy_otel_helm(app_name, ns_name, helm_cfg_final, provider)
@@ -137,6 +147,8 @@ for app_file in app_files:
     outputs[app_name] = {
         "namespace": ns.metadata["name"],
         "helm_release": chart.release_name,  # Output (when applicable)
+        "helm_values_yaml": dump_yaml(final_values),
+        "collector_config_yaml": dump_yaml(final_config),
     }
 
 pulumi.export("apps", outputs)
