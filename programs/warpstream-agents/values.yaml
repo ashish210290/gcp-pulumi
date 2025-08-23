@@ -1,7 +1,7 @@
 # WarpStream Agent Helm Chart Configuration
 # This file contains the values.yaml configuration for the WarpStream agent Helm chart
 # Placeholders (${VARIABLE_NAME}) will be replaced with actual values from the program
-replicaCount: 3
+replicaCount: 1
 resources:
   requests:
     cpu: "250m"
