@@ -158,6 +158,15 @@ jobs:
           pulumi login "${PULUMI_BACKEND_URL}"
           pulumi install || true
 
+      - name: Create venv & install deps (uv)
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+            python -m venv .venv
+            source .venv/bin/activate
+            uv pip install -r requirements.txt
+            python -c "import pulumi_kubernetes; print('✅ uv + venv ok')"
+            echo "PULUMI_PYTHON_CMD=$PWD/.venv/bin/python" >> $GITHUB_ENV    
+
       - name: Pulumi up (deploy)
         working-directory: ${{ env.WORKDIR }}
         env:
