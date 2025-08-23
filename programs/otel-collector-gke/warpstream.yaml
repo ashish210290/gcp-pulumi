@@ -9,6 +9,11 @@ helm:
   repo: https://open-telemetry.github.io/opentelemetry-helm-charts
   version: 0.99.0
   values:
+    serviceAccount:
+      create: true
+      name: otel-collector-sa
+      annotations:
+        iam.gke.io/gcp-service-account: id-warpstream-gsa@able-involution-469103-f2.iam.gserviceaccount.com
     image:
       repository: otel/opentelemetry-collector-contrib
     nameOverride: otel-warpstream
