@@ -150,6 +150,7 @@ jobs:
         run: |
           uv pip install --system --verbose -r requirements.txt
           uv pip list --system
+          python -c "import pulumi, pulumi_gcp, pulumi_kubernetes, yaml; print('✅ deps ok')"
 
       - name: Pulumi login (GCS backend) + install plugins
         working-directory: ${{ env.WORKDIR }}
