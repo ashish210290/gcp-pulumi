@@ -146,7 +146,7 @@ for app_file in app_files:
 
     outputs[app_name] = {
         "namespace": ns.metadata["name"],
-        "helm_release": chart.release_name,  # Output (when applicable)
+       # "helm_release": chart.release_name,  # Output (when applicable)
         "helm_values_yaml": dump_yaml(final_values),
         "collector_config_yaml": dump_yaml(final_config),
     }
