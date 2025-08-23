@@ -2,7 +2,7 @@ name: app1
 secretManager:
   secret: projects/908504960338/secrets/ws-warpstream-cluster-kubeconfig  # <-- change to your kubeconfig secret ID
   version: latest
-namespace: wrapstream
+namespace: observability
 
 helm:
   chart: opentelemetry-collector
