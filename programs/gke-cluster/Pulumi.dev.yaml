@@ -16,8 +16,9 @@ config:
     serviceAccount: "id-warpstream-gsa@able-involution-469103-f2.iam.gserviceaccount.com" # Service Account for WarpStream
 
     # Node configurations optimized for WarpStream
-    nodeCount: 1
-    maxNodeCount: 3
+    nodeCount: 3
+    minCount: 3
+    maxNodeCount: 6
     machineType: "n2-standard-4"  # 2 vCPUs, 8 GB RAM
     diskSizeGb: 100               # 100 GB disk size
     diskType: "pd-standard"            # SSD for better performance
