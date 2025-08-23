@@ -46,8 +46,8 @@ args: GKEClusterArgs = {
 
     # Node pool (Standard)
     "enable_autopilot":        False,
-    "node_count":              int(cluster_cfg.get("nodeCount", 3)),
-    "min_count":               int(cluster_cfg.get("nodeCount", 3)),
+    "node_count":              int(cluster_cfg.get("nodeCount", 1)),
+    "min_count":               int(cluster_cfg.get("nodeCount", 1)),
     "max_count":               int(cluster_cfg.get("nodeCount", 3)),
     "machine_type":            cluster_cfg.get("machineType", "e2-standard-4"),
     "disk_size_gb":            int(cluster_cfg.get("diskSizeGb", 100)),
