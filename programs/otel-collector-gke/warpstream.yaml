@@ -85,6 +85,7 @@ helm:
       exporters:
         # Managed Service for Prometheus (PromQL-ready)
         googlemanagedprometheus:
+          project: able-involution-469103-f2
           # If omitted, uses the cluster's project from ADC.
           # project: YOUR_MONITORING_PROJECT_ID
         # Optional: for debugging. Remove in prod if too chatty.
