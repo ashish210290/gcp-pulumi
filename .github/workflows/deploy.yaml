@@ -227,7 +227,7 @@ jobs:
           echo "Dev Stack Deployment complete. Stack information:"
           pulumi stack output --json
           
-  #New Job for WarpStream Agent Deployment
+  # New Job for WarpStream Agent Deployment
   deploy-warpstream-cluster:
     runs-on: ubuntu-latest
     needs: [deploy-gke-cluster] 
