@@ -33,12 +33,16 @@ helm:
               # namespace filter
               - source_labels: [__meta_kubernetes_namespace]
                 action: keep
-                regex: wrapstream
-              # only pods with app=warpstream-agent
-              - source_labels: [__meta_kubernetes_pod_label_app]
+                regex: warpstream
+              # only pods with app=warpstream-agent, match the app.kubernetes.io/name label
+              - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
                 action: keep
                 regex: warpstream-agent
-              # set metrics path
+              # (optional) also pin to this Helm release/instance
+              - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_instance]
+                action: keep
+                regex: warpstream-chart  
+              # set metrics path + address <pod_ip>:8080
               - action: replace
                 target_label: __metrics_path__
                 replacement: /metrics
