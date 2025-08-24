@@ -13,7 +13,7 @@ helm:
       create: true
       name: otel-collector-sa
       annotations:
-        iam.gke.io/gcp-service-account: id-warpstream-gsa@able-involution-469103-f2.iam.gserviceaccount.com
+        iam.gke.io/gcp-service-account: otel-sa@able-involution-469103-f2.iam.gserviceaccount.com
     image:
       repository: otel/opentelemetry-collector-contrib
     nameOverride: otel-warpstream
@@ -85,7 +85,7 @@ helm:
       exporters:
         # Managed Service for Prometheus (PromQL-ready)
         googlemanagedprometheus:
-          project: able-involution-469103-f2
+          #project: able-involution-469103-f2
           # If omitted, uses the cluster's project from ADC.
           # project: YOUR_MONITORING_PROJECT_ID
         # Optional: for debugging. Remove in prod if too chatty.
