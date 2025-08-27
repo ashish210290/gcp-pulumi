@@ -29,7 +29,7 @@ config:
 
     # Securiy Settings - production 
     enablePrivateNodes: true
-    enablePrivateEndpoint: true
+    enablePrivateEndpoint: false
     deleteProtection: false
 
     # IP allocation - optimized for scale
@@ -39,7 +39,7 @@ config:
     servicesIpv4CidrBlock: "10.8.0.0/20"
 
     # Master Authorized Network
-    cidrBlock: "0.0.0.0/32"
+    cidrBlock: "0.0.0.0/0"
     displayName: "WarpStream Internal Access"
 
     # WarpStream GCS Bucket
