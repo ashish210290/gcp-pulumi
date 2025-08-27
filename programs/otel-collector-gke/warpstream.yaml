@@ -19,6 +19,19 @@ helm:
     nameOverride: otel-warpstream
     # Choose how you want to run the collector (daemonset|deployment)
     mode: deployment
+    presets:
+      # Disable host metrics (CPU, mem, disk, network) from the node ,as Autopilot would mount / and get errors
+      hostMetrics:
+        enabled: false
+      # Enable kubernetes attributes (pod name, namespace, labels, etc)
+      kubernetesAttributes:
+        enabled: true
+      # disable kubelet metrics (pod count, container count, etc)
+      kubeletMetrics:
+        enabled: false
+      # Enable cluster metrics (node count, cpu/mem allocatable/total, etc)
+      clusterMetrics:
+        enabled: true
 
     # Full collector config matching your working setup
     config:

@@ -34,7 +34,7 @@ args: GKEClusterArgs = {
     "master_ipv4_cidr_block":  cluster_cfg.get("masterIpv4CidrBlock"),
 
     # IP alias
-    "enable_ip_alias":         bool(cluster_cfg.get("enableIpAlias", True)),
+    "enable_ip_alias":         bool(cluster_cfg.get("enableIpAlias", False)),
     "cluster_ipv4_cidr_block": cluster_cfg.get("clusterIpv4CidrBlock"),
     "services_ipv4_cidr_block":cluster_cfg.get("servicesIpv4CidrBlock"),
 
