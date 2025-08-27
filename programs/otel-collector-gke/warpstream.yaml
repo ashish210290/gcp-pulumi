@@ -33,7 +33,7 @@ helm:
       clusterMetrics:
         enabled: true
 
-    # Full collector config matching your working setup
+    # Full collector config matching your working setup issued in otel-config.yaml
     config:
       receivers:
         prometheus:

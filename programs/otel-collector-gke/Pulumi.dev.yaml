@@ -9,6 +9,5 @@ config:
       kubeconfig:
         SecretId: otel-collector-gke-cluster-kubeconfig # Secret containing kubeconfig for Otel Collector GKE cluster
         version: latest
-        
       gkeStackRef: organization/otel-collector-gke/dev
       otelConfigFile: warpstream.yaml
