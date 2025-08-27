@@ -29,7 +29,7 @@ config:
 
     # Securiy Settings - production 
     enablePrivateNodes: true
-    enablePrivateEndpoint: false
+    enablePrivateEndpoint: true
     deleteProtection: false
 
     # IP allocation - optimized for scale

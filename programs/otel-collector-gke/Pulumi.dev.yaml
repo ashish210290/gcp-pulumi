@@ -3,4 +3,12 @@ config:
   gcp:project: able-involution-469103-f2
 
   otel-collector-gke:apps:
-    - warpstream.yaml
+    - name: otel-collector-warpstream
+      namespace: observability
+      createNamespace: true # Create namespace if it doesn't exist, Default is true
+      kubeconfig:
+        SecretId: otel-collector-gke-cluster-kubeconfig # Secret containing kubeconfig for Otel Collector GKE cluster
+        version: latest
+        
+      gkeStackRef: organization/otel-collector-gke/dev
+      otelConfigFile: warpstream.yaml
