@@ -289,5 +289,4 @@ class GKECluster(pulumi.ComponentResource):
             "endpoint": self.endpoint,
             "ca_certificate": self.ca_certificate,
             "kubeconfig": self.kubeconfig,
-            "agent_pool_name": self.agent_pool.name
         })
